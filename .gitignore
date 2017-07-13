@@ -1,0 +1,46 @@
+# Temporary notebooks
+global_variables.py
+.ipynb_checkpoints
+psf_dir
+chains
+.coverage
+data
+run
+plots
+RockstarMaps
+ipython
+
+# Package/build directories
+NPTFit.egg-info
+build
+dist
+htmlcov
+
+# Cython output
+*.pyc
+*.so
+*.o
+*.c
+
+# Trailing files
+*~
+*.log
+*.nfs*
+*.swp*
+*.out
+*.core
+*.swo
+
+# Files we don't want to push
+*.pkl
+*.fits
+*.txt.gz
+*.gz
+*.csv
+*.npy
+*.pdf
+*.dat
+*.batch
+*.sh
+*.conf
+*.npz
