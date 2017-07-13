@@ -27,11 +27,6 @@ class make_NFW:
 
     def get_psi(self,ell_i,b_i):
         return hp.rotator.angdist([self.theta,self.phi],[np.pi/2.0 - b_i,ell_i])
-    # def get_psi(self,ell_i,b_i):
-    #   # '''
-    #   # return angular distance between (ell_i,b_i) and (self.ell, self.b)
-    #   # '''
-    #   return hp.rotator.angdist([self.theta,sef.phi],[np.pi/2.0 - b_i,ell_i])
 
     def rho_dimless(self,r):
         # Return NFW unless ask for Burkert
@@ -58,8 +53,3 @@ class make_NFW:
             return integrate.quad(lambda l: self.rho_dimless(self.r_NFW(l, psi))**2., self.distance - 100*self.r_s, self.distance + 100.*self.r_s)[0]
         else:
             return integrate.quad(lambda l: self.rho_dimless(self.r_NFW(l, psi)), self.distance - 100*self.r_s, self.distance + 100.*self.r_s)[0]
-
-    # def L_NFW_integral_theta_phi(self,theta,phi):
-    #     psi = self.get_psi(ell_i,b_i)
-    #     return integrate.quad(lambda l: self.rho_dimless(self.r_NFW(l, psi))**2., self.distance - 100*self.r_s, self.distance + 100.*self.r_s)[0]
- 

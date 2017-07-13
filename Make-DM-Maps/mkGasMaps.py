@@ -41,4 +41,3 @@ class mkGasMaps(make_Gas):
 
         Ls_norm = Ls/np.sum(Ls)
         self.map[self.pixels] = Ls_norm
-

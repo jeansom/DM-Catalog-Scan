@@ -41,4 +41,3 @@ class mkDMMaps(make_NFW):
 
         Ls_norm = Ls/np.sum(Ls)*self.J_0
         self.map[self.pixels] = Ls_norm
-

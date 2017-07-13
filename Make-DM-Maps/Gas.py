@@ -32,11 +32,6 @@ class make_Gas:
 
     def get_psi(self,ell_i,b_i):
         return hp.rotator.angdist([self.theta,self.phi],[np.pi/2.0 - b_i,ell_i])
-    # def get_psi(self,ell_i,b_i):
-    #   # '''
-    #   # return angular distance between (ell_i,b_i) and (self.ell, self.b)
-    #   # '''
-    #   return hp.rotator.angdist([self.theta,sef.phi],[np.pi/2.0 - b_i,ell_i])
 
     def _A_CR(self,r):
         '''
@@ -62,7 +57,7 @@ class make_Gas:
         this is the analgous of rho^2 but for cosmic ray emission
         '''
         #r in kpc
-        return self._A_CR(r)*self._gas_squared(r)#np.power(r/self.r_s, -self.gamma_nfw) * np.power(1. + r/self.r_s, self.gamma_nfw - 3.) 
+        return self._A_CR(r)*self._gas_squared(r)
 
     def r_NFW(self,l, psi):
         return np.sqrt(self.distance**2. + l**2. - 2.*self.distance*l*np.cos(psi))
@@ -73,8 +68,3 @@ class make_Gas:
 
     def L_NFW_integral_psi(self,psi):
         return integrate.quad(lambda l: self.rho_dimless(self.r_NFW(l, psi)),self.distance-100*np.max(self.rc_array) , self.distance + 100.*np.max(self.rc_array))[0]
-
-    # def L_NFW_integral_theta_phi(self,theta,phi):
-    #     psi = self.get_psi(ell_i,b_i)
-    #     return integrate.quad(lambda l: self.rho_dimless(self.r_NFW(l, psi))**2., self.distance - 100*self.r_s, self.distance + 100.*self.r_s)[0]
- 
