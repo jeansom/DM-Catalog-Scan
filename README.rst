@@ -21,6 +21,8 @@ The various folders within the code contain the following:
 
     - Catalogs: the catalog files to be used as filter for our scans
 
+    - DM-Maps: full sky DM maps created from catalogs
+
     - MonteCarlo: MC ready for analysis
 
     - PP-Factor: files associated with calculating the particle physics factor
@@ -42,4 +44,4 @@ The various folders within the code contain the following:
 To Do
 -----
 
-* Add the notebooks we use into the Make-Catalogs folder (DarkSky, 2MASS Tully, Lu, others?)
+* Add the notebooks we use into the Make-Catalogs folder (DarkSky, 2MASS Tully/Lu, others?)
