@@ -39,7 +39,7 @@ The various folders within the code contain the following:
 
 * **Smooth-Maps:** rapidly smooth maps using the Fermi PSF, also useful for generating point source models
 
-To Do List
-----------
+To Do
+-----
 
 * Add the notebooks we use into the Make-Catalogs folder (DarkSky, 2MASS Tully, Lu, others?)
