@@ -23,7 +23,6 @@ The various folders within the code contain the following:
     - MonteCarlo: MC ready for analysis
     - PP-Factor: files associated with calculating the particle physics factor
     - PS-Maps: individual and collective point source maps
-
 - Make-Catalogs: generate catalogs of objects, including lists of their DM properties and associated uncertainties 
 - Make-DM-Map: generate sky maps of DM halos
 - Make-Fermi-MC: generate MC designed to mock the Fermi-LAT data
