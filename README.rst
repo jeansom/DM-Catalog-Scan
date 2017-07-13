@@ -44,4 +44,6 @@ The various folders within the code contain the following:
 To Do
 -----
 
-* Add the notebooks we use into the Make-Catalogs folder (DarkSky, 2MASS Tully/Lu, others?)
+* Add the notebooks we use into the **Make-Catalogs** folder (DarkSky, 2MASS Tully/Lu, others?)
+
+* Tidy up and complete the code in **Scan-Small-ROI**
