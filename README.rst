@@ -1,5 +1,5 @@
 DM-Catalog-Scan
-==============
+===============
 
 **2MASS2Furious or using a Catalog of objects as a filter for astrophsical scans for Dark Matter**
 
@@ -13,7 +13,7 @@ AUTHORS
 
 
 Code Contents
-------------
+-------------
 
 The various folders within the code contain the following:
 
@@ -38,3 +38,8 @@ The various folders within the code contain the following:
 * **Scan-Small-ROI:** scans for small regions of interests, aka stacking analysis
 
 * **Smooth-Maps:** rapidly smooth maps using the Fermi PSF, also useful for generating point source models
+
+To Do List
+----------
+
+* Add the notebooks we use into the Make-Catalogs folder (DarkSky, 2MASS Tully, Lu, others?)
