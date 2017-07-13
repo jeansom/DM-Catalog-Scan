@@ -17,14 +17,14 @@ Code Contents
 
 The various folders within the code contain the following:
 
-* DataFiles: data used by various parts of the code. Includes the following subfolders:
+- DataFiles: data used by various parts of the code. Includes the following subfolders:
     - Catalogs: the catalog files to be used as filter for our scans
     - MonteCarlo: MC ready for analysis
     - PP-Factor: files associated with calculating the particle physics factor
     - PS-Maps: individual and collective point source maps
-* Make-Catalogs: generate catalogs of objects, including lists of their DM properties and associated uncertainties 
-* Make-DM-Map: generate sky maps of DM halos
-* Make-Fermi-MC: generate MC designed to mock the Fermi-LAT data
-* Scan-FullSky: scans for the entire sky at once
-* Scan-Small-ROI: scans for small regions of interests, aka stacking analysis
-* Smooth-Maps: rapidly smooth maps using the Fermi PSF, also useful for generating point source models
+- Make-Catalogs: generate catalogs of objects, including lists of their DM properties and associated uncertainties 
+- Make-DM-Map: generate sky maps of DM halos
+- Make-Fermi-MC: generate MC designed to mock the Fermi-LAT data
+- Scan-FullSky: scans for the entire sky at once
+- Scan-Small-ROI: scans for small regions of interests, aka stacking analysis
+- Smooth-Maps: rapidly smooth maps using the Fermi PSF, also useful for generating point source models
