@@ -23,6 +23,8 @@ The various folders within the code contain the following:
 
     - DM-Maps: full sky DM maps created from catalogs
 
+    - Misc: miscellaneous files
+
     - MonteCarlo: MC ready for analysis
 
     - PP-Factor: files associated with calculating the particle physics factor
@@ -33,13 +35,15 @@ The various folders within the code contain the following:
 
 * **Make-DM-Map:** generate sky maps of DM halos
 
-* **Make-Fermi-MC:** generate MC designed to mock the Fermi-LAT data
+* **Make-Fermi-MC:** generate MC designed to mock the Fermi data
+
+* **Make-PS-Maps:** generate Fermi PS models for individual point sources and store them efficiently
 
 * **Scan-FullSky:** scans for the entire sky at once
 
 * **Scan-Small-ROI:** scans for small regions of interests, aka stacking analysis
 
-* **Smooth-Maps:** rapidly smooth maps using the Fermi PSF, also useful for generating point source models
+* **Smooth-Maps:** rapidly smooth maps using the Fermi PSF
 
 To Do
 -----
@@ -48,4 +52,6 @@ To Do
 
 * Tidy up and complete the code in **Scan-Small-ROI**
 
-* Add the PS generation code into **Smooth-Maps**
+* Move point source models and MC to new folders when we swap to this code
+
+* Go through the catalogs and figure out which ones we want to keep
