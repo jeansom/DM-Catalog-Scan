@@ -1,5 +1,7 @@
-from scan import Scan
 import argparse
+
+from scan import Scan
+from local_dirs import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--perform_scan",
@@ -26,6 +28,8 @@ parser.add_argument("--floatDM",
                   action="store", dest="floatDM", default=0,type=int)
 parser.add_argument("--mc_dm",
                   action="store", dest="mc_dm", default=-1,type=int)
+parser.add_argument("--catalog_file",
+                  action="store", dest="catalog_file", default="DarkSky_ALL_200,200,200_v3.csv",type=str)
 
 results = parser.parse_args()
 iobj=results.iobj
@@ -40,18 +44,23 @@ floatDM=results.floatDM
 perform_scan=results.perform_scan
 perform_postprocessing=results.perform_postprocessing
 mc_dm=results.mc_dm
+catalog_file=results.catalog_file
 
 if load_dir != "":
-      load_dir = '/tigress/bsafdi/github/NPTF-working/NPTF-ID-Catalog/SimpleScan/data/' + str(load_dir) + "/"
+  load_dir = work_dir + '/Scan-Small-ROI/data/' + str(load_dir) + "/"
+else:
+  load_dir = None
 
 Scan(perform_scan=perform_scan, 
-	perform_postprocessing=perform_postprocessing, 
-	imc=imc, 
-	iobj=start_idx+iobj, 
-	Asimov=Asimov, 
-	float_ps_together=float_ps_together,
-	noJprof=noJprof,
-	floatDM=floatDM,
-      mc_dm=mc_dm,
-      load_dir=load_dir,
-	save_dir='/tigress/bsafdi/github/NPTF-working/NPTF-ID-Catalog/SimpleScan/data/' + str(save_dir) + "/")
+  perform_postprocessing=perform_postprocessing, 
+  imc=imc, 
+  iobj=start_idx+iobj, 
+  Asimov=Asimov, 
+  float_ps_together=float_ps_together,
+  noJprof=noJprof,
+  floatDM=floatDM,
+  mc_dm=mc_dm,
+  load_dir=load_dir,
+  verbose=True,
+  catalog_file=catalog_file, 
+  save_dir=work_dir + '/Scan-Small-ROI/data/' + str(save_dir) + "/")

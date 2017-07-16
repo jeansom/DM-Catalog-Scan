@@ -25,8 +25,9 @@ from minuit_functions import call_ll
 
 # Additional modules
 sys.path.append(nptf_old_dir)
-sys.path.append(work_dir + '/AccurateSmoothing')
-sys.path.append(work_dir + '/mkDMMaps')
+sys.path.append(work_dir + '/Smooth-Maps')
+# sys.path.append('/tigress/nrodd/Ben-NPTF-ID-Catalog/AccurateSmoothing')
+sys.path.append(work_dir + '/Make-DM-Maps')
 import fermi.fermi_plugin as fp
 import mkDMMaps
 import king_smooth as ks
@@ -38,14 +39,14 @@ from NPTFit import create_mask as cm # module for creating the mask
 
 
 class Scan():
-    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir="",imc=None, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='../data/Catalogs/DarkSky_ALL_200,200,200_v3.csv', Burkert=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1):
+    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1):
         
-        self.catalog = pd.read_csv(catalog_file) # Halo catalog
+        self.catalog = pd.read_csv(work_dir + '/DataFiles/Catalogs/' + catalog_file) # Halo catalog
 
         self.iobj = iobj # Objects index to scan
         self.imc = imc # MC index
         self.emin = emin # Minimum energy bin
-        self.emax = emax # Minimum energy bin
+        self.emax = emax # Maximum energy bin
         self.channel = channel # Annihilation channel (see PPPC)
         self.nside = nside # Healpix nside
         self.eventclass = eventclass # Fermi eventclass -- 5 for UCV
@@ -53,13 +54,13 @@ class Scan():
         self.diff = diff # Diffuse model -- p6, p7, p8
         self.Burkert = Burkert # Whether to use a Burker (True) or NFW (False)
         self.boost = boost # Whether to use boosted or unboosted J
-        self.float_ps_together = float_ps_together
+        self.float_ps_together = float_ps_together # Whether to float the whole PS map
         self.Asimov = Asimov # Whether to use the Asimov expectation
         self.floatDM = floatDM # Whether to float the DM in the initial scan
         self.verbose = verbose # Whether to print Minuit output
         self.noJprof = noJprof # Whether to not do a profile over the J uncertainty
         self.save_dir = save_dir # Directory to save output files
-        self.load_dir = load_dir # Directory to save output files
+        self.load_dir = load_dir # Directory to load intensity LLs from
 
         if mc_dm == -1:
             self.dm_string = "nodm"
@@ -75,12 +76,12 @@ class Scan():
                         raise   
                 self.save_dir += "/"
 
-        if self.load_dir == "":
+        if self.load_dir is None:
             self.load_dir = self.save_dir
 
         # If floating sources individually, find nearby 3FGL PSs
         if not self.float_ps_together:
-            source_3fg_df = pd.read_csv(additional_data_dir + '3fgl.dat', sep='|', comment='#')
+            source_3fg_df = pd.read_csv(work_dir + '/DataFiles/Catalogs/3fgl.dat', sep='|', comment='#')
             source_3fg_df.rename(columns=lambda x: x.strip(), inplace=True) # Strip whitespace
             for col in source_3fg_df.columns.values:
                 try:
@@ -96,7 +97,7 @@ class Scan():
         if self.Asimov:
             self.mc_tag = '_Asimov'
         else:
-            if self.imc is not None:
+            if self.imc != -1:
                 self.mc_tag = '_mc' + str(self.imc)
             else:
                 self.mc_tag = '_data'
@@ -118,13 +119,13 @@ class Scan():
         # Load necessary templates
         f_global.add_diffuse_newstyle(comp = self.diff,eventclass = self.eventclass, eventtype = self.eventtype) 
         f_global.add_iso()  
-        ps_temp = np.load(additional_data_dir + 'ps_map.npy')
+        ps_temp = np.load(work_dir + '/DataFiles/PS-Maps/ps_map.npy')
         f_global.add_template_by_hand(comp='ps_model',template=ps_temp)
         f_global.add_bubbles()
 
         # If Asimov normalize the templates and create a summed map
         if self.Asimov:
-            norm_file = additional_data_dir + 'P8UCVA_norm.npy' 
+            norm_file = work_dir + '/DataFiles/MiscP8UCVA_norm.npy' 
             f_global.use_template_normalization_file(norm_file,key_suffix='-0')
             Asimov_data = np.zeros((40,hp.nside2npix(self.nside)))
             for key in f_global.template_dict.keys():
@@ -160,6 +161,9 @@ class Scan():
             ######################
             # Templates and maps #
             ######################
+
+            if self.verbose:
+                print "At bin", ebin
 
             if self.imc is not None:
                 data = np.load(mc_dir + 'MC_allhalos_p7_' + self.dm_string + '_v' + str(self.imc)+'.npy')[ebin].astype(np.float64)
@@ -209,54 +213,67 @@ class Scan():
             else:
                 # Astropy-formatted coordinates of cluster
                 c2 = SkyCoord("galactic", l=[l]*u.deg, b=[b]*u.deg)
-                idx3fgl, idx2mass, d2d, _ = c2.search_around_sky(self.c3, 10*u.deg) # Find nearby 3FGL
-                for i3fgl in idx3fgl:
-                    ps_file = np.load(ps_indiv_dir + '/ps_temp_128_5_0_'+str(i3fgl)+'.npy')
+                idx3fgl_10, _, _, _ = c2.search_around_sky(self.c3, 10*u.deg)
+                idx3fgl_18, _, _, _ = c2.search_around_sky(self.c3, 12*u.deg)
+                
+                ps_map_outer = np.zeros(hp.nside2npix(self.nside))
+                for i3fgl in idx3fgl_18:
+                    ps_file = np.load(ps_indiv_dir + '/ps_temp_128_5_'+str(self.eventtype)+'_'+str(i3fgl)+'.npy')
                     ps_map = np.zeros(hp.nside2npix(self.nside))
                     ps_map[np.vectorize(int)(ps_file[::,ebin,0])] = ps_file[::,ebin,1]
+                    if i3fgl in idx3fgl_10: # If within 10 degrees, float individually
+                        n.add_template(ps_map, 'ps_'+str(i3fgl))
+                        n.add_poiss_model('ps_'+str(i3fgl), '$A_\mathrm{ps'+str(i3fgl)+'}$', [0,10], False)
+                    else: # Otherwise, add to be floated together
+                        ps_map_outer += ps_map
 
-                    n.add_template(ps_map, 'ps_'+str(i3fgl))
-                    n.add_poiss_model('ps_'+str(i3fgl), '$A_\mathrm{ps'+str(i3fgl)+'}$', [0,10], False)
-
+                if np.sum(ps_map_outer) != 0:
+                    n.add_template(ps_map_outer, 'ps_outer')
+                    n.add_poiss_model('ps_outer', '$A_\mathrm{ps_outer}$', [0,10], False)
+                
             n.configure_for_scan()
-            
+
             ##########
             # Minuit #
             ##########
 
-            keys = n.poiss_model_keys
-            limit_dict = {}
-            init_val_dict = {}
-            step_size_dict = {}
-            for key in keys:
-                if key == 'DM':
-                    limit_dict['limit_'+key] = (0,1000)
-                else:
-                    limit_dict['limit_'+key] = (0,200)
-                init_val_dict[key] = 0.0
-                step_size_dict['error_'+key] = 1
-            other_kwargs = {'print_level': self.verbose, 'errordef': 1}
-            z = limit_dict.copy()
-            z.update(other_kwargs)
-            z.update(limit_dict)
-            z.update(init_val_dict)
-            z.update(step_size_dict)
-            f = call_ll(len(keys),n.ll,keys)
-            m = Minuit(f,**z)
-            m.migrad()
+            # Skip this step if there is 0 data (higher energy bins)
+            if np.sum(data*np.logical_not(analysis_mask)) != 0: 
+                keys = n.poiss_model_keys
+                limit_dict = {}
+                init_val_dict = {}
+                step_size_dict = {}
+                for key in keys:
+                    if key == 'DM':
+                        limit_dict['limit_'+key] = (0,1000)
+                    else:
+                        limit_dict['limit_'+key] = (0,50)
+                    init_val_dict[key] = 0.3
+                    step_size_dict['error_'+key] = 0.1
+                other_kwargs = {'print_level': self.verbose, 'errordef': .1}
+                z = limit_dict.copy()
+                z.update(other_kwargs)
+                z.update(limit_dict)
+                z.update(init_val_dict)
+                z.update(step_size_dict)
+                f = call_ll(len(keys),n.ll,keys)
+                m = Minuit(f,**z)
+                m.migrad(ncall=50000, precision=1e-17)
                 
             ###################################
             # NPTFit fixed DM and bkg profile #
             ###################################
             
             # Make background sum and initiate second scan
+            # If was no data leave bkg_sum as 0
             bkg_sum = np.zeros(len(data))
-            for key in keys:
-                if key != 'DM': # Don't add DM in here
-                    if m.values[key] != 0:
-                        bkg_sum += n.templates_dict[key]*m.values[key]
-                    else: # If zero, use ~parabolic error
-                        bkg_sum += n.templates_dict[key]*m.errors[key]/2.
+            if np.sum(data*np.logical_not(analysis_mask)) != 0:
+                for key in keys:
+                    if key != 'DM': # Don't add DM in here
+                        if m.values[key] != 0:
+                            bkg_sum += n.templates_dict[key]*m.values[key]
+                        else: # If zero, use ~parabolic error
+                            bkg_sum += n.templates_dict[key]*m.errors[key]/2.
             
             
             nDM = nptfit.NPTF(tag='dm_o'+str(self.iobj)+'_E'+str(ebin)+self.mc_tag)
@@ -266,7 +283,13 @@ class Scan():
             else:
                 nDM.load_data(data, fermi_exposure)
                 nDM.add_template(bkg_sum, 'bkg_sum')
-            nDM.load_mask(analysis_mask)
+            
+            # If there is no data, only go over pixels where DM is non-zero
+            if np.sum(data*np.logical_not(analysis_mask)) != 0:
+                nDM.load_mask(analysis_mask)
+            else:
+                nodata_mask = DM_template_smoothed == 0
+                nDM.load_mask(nodata_mask)
             nDM.add_poiss_model('bkg_sum', '$A_\mathrm{bkg}$', fixed=True, fixed_norm=1.0)
             
             #####################
@@ -295,9 +318,9 @@ class Scan():
 
         # If b use the precomputed value
         if self.channel == 'b':
-            PPnoxsec_ary = np.load(additional_data_dir + 'PPnoxsec_b_ary.npy')
+            PPnoxsec_ary = np.load(work_dir + '/PP-Factor/PPnoxsec_b_ary.npy')
         else:
-            dNdLogx_df = pd.read_csv(additional_data_dir + 'AtProduction_gammas.dat', delim_whitespace=True)
+            dNdLogx_df = pd.read_csv(work_dir + '/PP-Factor/AtProduction_gammas.dat', delim_whitespace=True)
             
             PPnoxsec_ary = np.zeros(shape=(len(m_ary),len(self.ebins)-1))
             for mi in range(len(m_ary)):

@@ -32,11 +32,11 @@ def construct_xsec_LL(double[::1] xsecs,double[::1] ebins,double [::1] PPnoxsec,
     """
 
     cdef double[::1] LL2vals = np.zeros(len(xsecs),dtype=DTYPE)
-    cdef double[::1] l10J_proflike = np.linspace(l10_J-3*l10_Jerr,l10_J+3*l10_Jerr,700,dtype=DTYPE)
+    cdef double[::1] J_proflike = np.linspace(l10_J-3*l10_Jerr,l10_J+3*l10_Jerr,700,dtype=DTYPE)
     cdef double[::1] LL_proflike
 
     cdef Py_ssize_t xi, Ji, ei, i
-    cdef int Nj = len(l10J_proflike)
+    cdef int Nj = len(J_proflike)
     cdef int Ne = len(ebins) - 1 #Ne is the number of bin edges, so Ne-1 bins
     cdef int xj = len(xsecs)
 
@@ -50,7 +50,7 @@ def construct_xsec_LL(double[::1] xsecs,double[::1] ebins,double [::1] PPnoxsec,
 
     for xi in range(xj):
         # Need to calculate the likelihood for many J-values and find the one that maximises
-        LL_proflike = np.zeros(len(l10J_proflike),dtype=DTYPE)
+        LL_proflike = np.zeros(len(J_proflike),dtype=DTYPE)
 
         for Ji in range(Nj):
             # Loop over J-factors
@@ -59,7 +59,7 @@ def construct_xsec_LL(double[::1] xsecs,double[::1] ebins,double [::1] PPnoxsec,
                 
                 min_int = intensity[ei,0] 
                 max_int = intensity[ei,Nei-1]                
-                intval = PPnoxsec[ei]*xsecs[xi]*pow(10.,l10J_proflike[Ji])
+                intval = PPnoxsec[ei]*xsecs[xi]*pow(10.,J_proflike[Ji])
 
                 if intval <= min_int:
                     # Add minimum value
@@ -72,8 +72,8 @@ def construct_xsec_LL(double[::1] xsecs,double[::1] ebins,double [::1] PPnoxsec,
                     LL_proflike[Ji] += interp(intensity[ei], LLs[ei], intval, Nei) 
             
             # Add the J-factor weighting term as a log normal
-            LL_proflike[Ji] += -pow(l10J_proflike[Ji]-l10_J,2.)/(2*pow(l10_Jerr,2.)) \
-                            - log( sqrt(2*pi)*l10_Jerr*pow(10.,l10J_proflike[Ji])*ln10 )
+            LL_proflike[Ji] += -pow(J_proflike[Ji]-l10_J,2.)/(2*pow(l10_Jerr,2.)) \
+                            - log( sqrt(2*pi)*l10_Jerr*pow(10.,l10_J)*ln10 )
 
         # Now find the maximum LL from this list, as that's the profile likelihood method
         LL2vals[xi] = 2*find_max(LL_proflike,Nj) # 2x because for TS

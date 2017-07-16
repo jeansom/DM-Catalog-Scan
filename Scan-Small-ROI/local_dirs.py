@@ -17,10 +17,9 @@
 
 # Tiger dirs
 nptf_old_dir='/tigress/smsharma/Fermi-NPTF-exposure/'
-work_dir = '/tigress/bsafdi/github/NPTF-working/NPTF-ID-Catalog/'
+work_dir = '/tigress/nrodd/DM-Catalog-Scan/'
 psf_dir='/tigress/smsharma/public/CTBCORE/psf_data/'
 maps_dir='/tigress/smsharma/public/CTBCORE/'
 fermi_data_dir='/tigress/smsharma/public/FermiData/'
-ps_indiv_dir='/tigress/bsafdi/github/NPTF-working/NPTF-ID-Catalog/data/ps_data/'
-additional_data_dir='/tigress/bsafdi/github/NPTF-working/NPTF-ID-Catalog/AdditionalData/'
-mc_dir='/tigress/nrodd/2mass2furious/FakeMaps/'
+ps_indiv_dir='/tigress/nrodd/DM-Catalog-Scan/DataFiles/PS-Maps/'
+mc_dir='/tigress/nrodd/DM-Catalog-Scan/DataFiles/MonteCarlo/'
