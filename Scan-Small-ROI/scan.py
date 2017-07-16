@@ -202,7 +202,8 @@ class Scan():
             n.add_poiss_model(self.diff, '$A_\mathrm{dif}$', [0,10], False)
             n.add_poiss_model('iso', '$A_\mathrm{iso}$', [0,20], False)
             
-            n.add_poiss_model('bub', '$A_\mathrm{bub}$', [0,10], False)
+            if (np.sum(bub*np.logical_not(analysis_mask)) != 0):
+                n.add_poiss_model('bub', '$A_\mathrm{bub}$', [0,10], False)
 
             if self.floatDM:
                 n.add_template(DM_template_smoothed, 'DM')
