@@ -175,6 +175,10 @@ class Scan():
             ksi = ks.king_smooth(maps_dir, ebin, self.eventclass, self.eventtype, threads=1)
             DM_template_smoothed = ksi.smooth_the_map(DM_template)
 
+            if ebin < 7: # Copy bin 7 smoothing for use
+                ksi7 = ks.king_smooth(maps_dir, 7, self.eventclass, self.eventtype, threads=1)
+                DM_template_smoothed_bin7 = ksi7.smooth_the_map(DM_template)
+
             DM_intensity_base = np.sum(DM_template_smoothed/fermi_exposure)
             
             dif = f_global.template_dict[self.diff][ebin]
@@ -205,9 +209,13 @@ class Scan():
                 n.add_poiss_model('bub', '$A_\mathrm{bub}$', [0,10], False)
 
             if self.floatDM:
-                n.add_template(DM_template_smoothed, 'DM')
-                n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
-
+                if ebin >= 7: # Normal
+                    n.add_template(DM_template_smoothed, 'DM')
+                    n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
+                else: # Add bin 7
+                    n.add_template(DM_template_smoothed_bin7, 'DM')
+                    n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
+                    
             if self.float_ps_together:
                 n.add_poiss_model('psc', '$A_\mathrm{psc}$', [0,10], False)
             else:

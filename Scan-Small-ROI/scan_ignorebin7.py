@@ -368,13 +368,13 @@ class Scan():
         if self.noJprof:
             for im in tqdm(range(len(m_ary)), disable = 1 - self.verbose):
                 for ixsec, xsec in enumerate(xsecs):
-                    for iebin in range(len(self.ebins)-1):
+                    for iebin in range(7,len(self.ebins)-1):
                         intval = PPnoxsec_ary[im][iebin]*10**mulog10J*xsec
                         LL2_xsec_m_ary[im,ixsec] += 2*np.interp(intval,inten_ary[iebin], LL_inten_ary[iebin])
         # Otherwise profile over the error in J
         else:
             for im in tqdm(range(len(m_ary)), disable = 1 - self.verbose):
-                LL2_xsec_m_ary[im] = Litx.construct_xsec_LL(xsecs,self.ebins,PPnoxsec_ary[im],LL_inten_ary,inten_ary,mulog10J,siglog10J)
+                LL2_xsec_m_ary[im] = Litx.construct_xsec_LL(xsecs,np.arange(7,41),PPnoxsec_ary[im][7:],LL_inten_ary[7:],inten_ary[7:],mulog10J,siglog10J)
 
         ####################################################
         # Calculate val, loc and xsec of max TS, and limit #

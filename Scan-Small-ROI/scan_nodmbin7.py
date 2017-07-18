@@ -64,7 +64,7 @@ class Scan():
         if mc_dm == -1:
             self.dm_string = "nodm"
         else:
-            self.dm_string = "dm" + str(mc_dm)
+            self.dm_string = "10dm" + str(mc_dm)
 
         if self.save_dir != "":
             if not os.path.exists(self.save_dir):
@@ -205,8 +205,9 @@ class Scan():
                 n.add_poiss_model('bub', '$A_\mathrm{bub}$', [0,10], False)
 
             if self.floatDM:
-                n.add_template(DM_template_smoothed, 'DM')
-                n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
+                if ebin >= 7: # Dont' float DM for ebin < 7
+                    n.add_template(DM_template_smoothed, 'DM')
+                    n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
 
             if self.float_ps_together:
                 n.add_poiss_model('psc', '$A_\mathrm{psc}$', [0,10], False)
