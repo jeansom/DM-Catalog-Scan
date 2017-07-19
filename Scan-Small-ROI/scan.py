@@ -46,17 +46,17 @@ class Scan():
         self.imc = imc # MC index
         self.emin = emin # Minimum energy bin
         self.emax = emax # Maximum energy bin
-        self.channel = channel # Annihilation channel (see PPPC)
+        self.channel = channel # Annihilation channel (see PPPC4DMID)
         self.nside = nside # Healpix nside
         self.eventclass = eventclass # Fermi eventclass -- 5 for UCV
         self.eventtype = eventtype # Fermi eventtype -- 0 (All) or 3 (Q4)
-        self.diff = diff # Diffuse model -- p6, p7, p8
-        self.Burkert = Burkert # Whether to use a Burker (True) or NFW (False)
+        self.diff = diff # Diffuse model -- p6v11, p7, p8
+        self.Burkert = Burkert # Whether to use a Burkert (True) or NFW (False)
         self.boost = boost # Whether to use boosted or unboosted J
         self.float_ps_together = float_ps_together # Whether to float the whole PS map
         self.Asimov = Asimov # Whether to use the Asimov expectation
         self.floatDM = floatDM # Whether to float the DM in the initial scan
-        self.verbose = verbose # Whether to print Minuit output
+        self.verbose = verbose # Whether to print tqdm and Minuit output
         self.noJprof = noJprof # Whether to not do a profile over the J uncertainty
         self.save_dir = save_dir # Directory to save output files
         self.load_dir = load_dir # Directory to load intensity LLs from
@@ -205,8 +205,12 @@ class Scan():
                 n.add_poiss_model('bub', '$A_\mathrm{bub}$', [0,10], False)
 
             if self.floatDM:
-                n.add_template(DM_template_smoothed, 'DM')
-                n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
+                if ebin >= 7: 
+                    # Don't float DM in initial scan for < 1 GeV. Below here
+                    # Fermi PSF is so large that we find the DM often picks up
+                    # spurious excesses in MC.
+                    n.add_template(DM_template_smoothed, 'DM')
+                    n.add_poiss_model('DM', '$A_\mathrm{DM}$', [0,1000], False)
 
             if self.float_ps_together:
                 n.add_poiss_model('psc', '$A_\mathrm{psc}$', [0,10], False)
@@ -214,7 +218,7 @@ class Scan():
                 # Astropy-formatted coordinates of cluster
                 c2 = SkyCoord("galactic", l=[l]*u.deg, b=[b]*u.deg)
                 idx3fgl_10, _, _, _ = c2.search_around_sky(self.c3, 10*u.deg)
-                idx3fgl_18, _, _, _ = c2.search_around_sky(self.c3, 12*u.deg)
+                idx3fgl_18, _, _, _ = c2.search_around_sky(self.c3, 18*u.deg)
                 
                 ps_map_outer = np.zeros(hp.nside2npix(self.nside))
                 for i3fgl in idx3fgl_18:

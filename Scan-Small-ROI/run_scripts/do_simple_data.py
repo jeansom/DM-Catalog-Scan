@@ -36,7 +36,7 @@ cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
         batch2 ='start_idx='+str(halo_start)+'\n'
         batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface_nodmbin7.py --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --iobj \$1 --save_dir Tully_nodmbin7 --float_ps_together 0 --Asimov 0 --floatDM 1" > run-Data-indiv-floatDM-'''+str(it)+'''-v'''+str(mci)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface_nodmbin7.py --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --iobj \$1 --save_dir Tully_nodmbin7_sid --float_ps_together 0 --Asimov 0 --floatDM 1" > run-Data-indiv-floatDM-'''+str(it)+'''-v'''+str(mci)+'''.sh
 chmod u+x run-Data-indiv-floatDM-'''+str(it)+'''-v'''+str(mci)+'''.sh
 '''
         runpart='echo   0-49  ./run-Data-indiv-floatDM-'+str(it)+'-v'+str(mci)+'.sh %t  > run-Data-indiv-floatDM-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 run-Data-indiv-floatDM-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'

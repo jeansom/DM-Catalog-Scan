@@ -1,3 +1,5 @@
+assert(1==0),"Hi Sid! Set up a data version of this or some way such that if data is called we use the p8 not p7 diffuse model"
+
 import argparse
 
 from scan import Scan

@@ -109,7 +109,7 @@ class LimitPlot():
             best_lim = np.zeros(len(self.marr))+1e-18
             top10_count = 0
 
-            for iobj in (range(self.n_good_halos)):
+            for iobj in tqdm_notebook(range(self.n_good_halos)):
 
                 # Skip if not a good object
                 if iobj not in self.good_vals: continue
@@ -154,7 +154,7 @@ class LimitPlot():
             else: 
                 masses = np.arange(len(self.marr))
 
-            for im in (masses):
+            for im in tqdm_notebook(masses):
 
                 ##################
                 # Combined Limit #
@@ -167,7 +167,7 @@ class LimitPlot():
                 halos_kept = 0
                 LL2_cumulative = np.zeros(len(xsecs))
 
-                for iobj in (self.good_vals):
+                for iobj in tqdm_notebook(self.good_vals):
 
                     # Load halo max TS, mloc and xsec values and see if passes cut
                     pp_file = np.load(self.data_dir + str(iobj) + self.data_str + '.npz')
