@@ -17,6 +17,7 @@ import pandas as pd
 from scipy import interpolate, integrate
 from astropy import units as u
 from astropy.coordinates import SkyCoord, Distance
+from astropy.cosmology import Planck15
 import healpy as hp
 from tqdm import *
 
@@ -100,6 +101,7 @@ class Scan():
             if self.imc != -1:
                 self.mc_tag = '_mc' + str(self.imc)
             else:
+                self.diff = 'p8' # If data use p8!
                 self.mc_tag = '_data'
 
         if perform_scan:
@@ -378,10 +380,20 @@ class Scan():
         # Interpolate intensity LLs to get xsec LLs #
         #############################################
 
+        # If randloc load a representative halo in size at 
         if self.randlocs:
-            ff
+            # Representative values
+            rep_angext = np.array([0.02785567,0.12069876,0.21354185,0.30638494,0.39922802,0.49207111,0.5849142,0.67775728,0.77060037,0.86344346,0.95628654,1.04912963,1.14197272,1.2348158,1.32765889,1.42050198,1.51334507,1.60618815,1.69903124,1.79187433])
+            obj_angext = 2*self.catalog[u'rs'].values[self.iobj] / \
+                         (Planck15.angular_diameter_distance(self.catalog[u'z'].values[self.iobj])*1000) \
+                         * 180./np.pi
+            rep_index = (np.abs(rep_angext-obj_angext)).argmin()
+            
+            # Choose a random sky location
+            skyloc = np.random.randint(200) 
+            LL_inten_file = np.load(self.load_dir+'LL_inten_o'+str(rep_index)+str(skyloc)+'.npz')
         else:
-            LL_inten_file  =  np.load(self.load_dir + 'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
+            LL_inten_file = np.load(self.load_dir+'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
 
         LL_inten_ary, inten_ary = LL_inten_file['LL'], LL_inten_file['intens']
         xsecs = np.logspace(-33,-18,301)
@@ -423,7 +435,7 @@ class Scan():
                 if val < -2.71:
                     scale = (TS_xsec_ary[xi-1]-max_TS+2.71)/(TS_xsec_ary[xi-1]-TS_xsec_ary[xi])
                     lim_ary[im] = 10**(np.log10(xsecs[xi-1])+scale*(np.log10(xsecs[xi])-np.log10(xsecs[xi-1])))
-                    break
+                    break  
 
         #####################################
         # Setup save string and output data #

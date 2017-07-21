@@ -2,7 +2,7 @@ import os, sys
 import numpy as np
 
 mcstart = 0
-nmc = 100
+nmc = 200
 
 halo_step=0
 i_start=20
@@ -37,7 +37,7 @@ cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
         batch2 ='start_idx='+str(halo_start)+'\n'+'catalog_file=fake_cat_angext_v1.csv'+'\n'
         batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --start_idx $start_idx --randlocs 1 --perform_scan 1 --perform_postprocessing 0 --imc -1 --iobj \$1 --save_dir Tully_debug_randlocs''' + str(mci) + ''' --float_ps_together 0 --Asimov 0 --floatDM 1" > run_scripts/conf/run-Tully'''+str(it)+'''-v'''+str(mci)+str(loc)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --start_idx $start_idx --randlocs 1 --perform_scan 1 --perform_postprocessing 0 --imc -1 --iobj \$1 --save_dir Tully_randlocs''' + str(mci) + ''' --float_ps_together 0 --Asimov 0 --floatDM 1" > run_scripts/conf/run-Tully'''+str(it)+'''-v'''+str(mci)+str(loc)+'''.sh
 chmod u+x run_scripts/conf/run-Tully'''+str(it)+'''-v'''+str(mci)+str(loc)+'''.sh
 '''
         runpart='echo   0-19  ./run_scripts/conf/run-Tully'+str(it)+'-v'+str(mci)+str(loc)+'.sh %t  > run_scripts/conf/run-Tully'+str(it)+'-v'+str(mci)+str(loc)+'.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 run_scripts/conf/run-Tully'+str(it)+'-v'+str(mci)+str(loc)+'.conf'+'\n'+'\n'
