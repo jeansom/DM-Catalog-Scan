@@ -378,7 +378,11 @@ class Scan():
         # Interpolate intensity LLs to get xsec LLs #
         #############################################
 
-        LL_inten_file  =  np.load(self.load_dir + 'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
+        if self.randlocs:
+            ff
+        else:
+            LL_inten_file  =  np.load(self.load_dir + 'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
+
         LL_inten_ary, inten_ary = LL_inten_file['LL'], LL_inten_file['intens']
         xsecs = np.logspace(-33,-18,301)
         LL2_xsec_m_ary = np.zeros((len(m_ary),len(xsecs))) # 2 x LL, ready for TS
