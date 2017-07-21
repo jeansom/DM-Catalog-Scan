@@ -38,7 +38,7 @@ from NPTFit import create_mask as cm # module for creating the mask
 
 
 class Scan():
-    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1):
+    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1, randlocs=False):
         
         self.catalog = pd.read_csv(work_dir + '/DataFiles/Catalogs/' + catalog_file) # Halo catalog
 
@@ -60,6 +60,7 @@ class Scan():
         self.noJprof = noJprof # Whether to not do a profile over the J uncertainty
         self.save_dir = save_dir # Directory to save output files
         self.load_dir = load_dir # Directory to load intensity LLs from
+        self.randlocs = randlocs # Whether to pick random location
 
         if mc_dm == -1:
             self.dm_string = "nodm"
@@ -134,9 +135,23 @@ class Scan():
         # Get DM halo map #
         ###################
 
-        l = self.catalog.l.values[self.iobj]
-        b = self.catalog.b.values[self.iobj]
-        rs = self.catalog.rs.values*1e-3
+        if not self.randlocs: # If doing random locations
+            l = self.catalog.l.values[self.iobj]
+            b = self.catalog.b.values[self.iobj]
+        else:
+            badval = True
+            while (badval):
+                test_ell = np.random.uniform(0.,2*np.pi)
+                test_b = np.arccos(np.random.uniform(-1.,1.))-np.pi/2.
+                test_pixval = hp.ang2pix(self.nside, test_b+np.pi/2, test_ell)
+                # Check if not masked
+                if (np.abs(test_b)*180./np.pi > 20 ):
+                    badval = False
+                    l = test_ell*180./np.pi
+                    b = test_b*180./np.pi
+            np.savetxt(self.save_dir + "/lb_obj"+str(self.iobj) + ".dat", np.array([l, b]))
+
+        rs = self.catalog.rs.values[self.iobj]*1e-3
         # rs = self.catalog.rvir_inf.values[self.iobj]/self.catalog.cvir_inf.values[self.iobj]*1e-3
         if self.boost:
             J0 = 10**self.catalog.mulog10J_inf.values[self.iobj]
@@ -165,7 +180,7 @@ class Scan():
             if self.verbose:
                 print "At bin", ebin
 
-            if self.imc is not None:
+            if self.imc != -1:
                 data = np.load(mc_dir + 'MC_allhalos_p7_' + self.dm_string + '_v' + str(self.imc)+'.npy')[ebin].astype(np.float64)
             else:
                 data = f_global.CTB_count_maps[ebin].astype(np.float64)
@@ -175,7 +190,6 @@ class Scan():
             DM_template = DM_template_base*fermi_exposure/np.sum(DM_template_base*fermi_exposure)
             ksi = ks.king_smooth(maps_dir, ebin, self.eventclass, self.eventtype, threads=1)
             DM_template_smoothed = ksi.smooth_the_map(DM_template)
-
             DM_intensity_base = np.sum(DM_template_smoothed/fermi_exposure)
             
             dif = f_global.template_dict[self.diff][ebin]

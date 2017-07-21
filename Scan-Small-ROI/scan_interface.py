@@ -32,6 +32,8 @@ parser.add_argument("--catalog_file",
                   action="store", dest="catalog_file", default="DarkSky_ALL_200,200,200_v3.csv",type=str)
 parser.add_argument("--diff",
                   action="store", dest="diff", default="p7",type=str)
+parser.add_argument("--randlocs",
+                  action="store", dest="randlocs", default=0,type=int)
 
 results = parser.parse_args()
 iobj=results.iobj
@@ -48,6 +50,7 @@ perform_postprocessing=results.perform_postprocessing
 mc_dm=results.mc_dm
 catalog_file=results.catalog_file
 diff=results.diff
+randlocs=results.randlocs
 
 if load_dir != "":
   load_dir = work_dir + '/Scan-Small-ROI/data/' + str(load_dir) + "/"
@@ -67,4 +70,5 @@ Scan(perform_scan=perform_scan,
   load_dir=load_dir,
   verbose=True,
   catalog_file=catalog_file, 
+  randlocs=randlocs,
   save_dir=work_dir + '/Scan-Small-ROI/data/' + str(save_dir) + "/")
