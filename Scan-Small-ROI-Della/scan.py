@@ -136,8 +136,7 @@ class Scan():
 
         l = self.catalog.l.values[self.iobj]
         b = self.catalog.b.values[self.iobj]
-        rs = self.catalog.rs.values*1e-3
-        # rs = self.catalog.rvir_inf.values[self.iobj]/self.catalog.cvir_inf.values[self.iobj]*1e-3
+        rs = self.catalog.rvir_inf.values[self.iobj]/self.catalog.cvir_inf.values[self.iobj]*1e-3
         if self.boost:
             J0 = 10**self.catalog.mulog10J_inf.values[self.iobj]
         else:
