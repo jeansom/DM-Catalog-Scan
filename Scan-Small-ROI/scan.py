@@ -145,7 +145,7 @@ class Scan():
                 test_b = np.arccos(np.random.uniform(-1.,1.))-np.pi/2.
                 test_pixval = hp.ang2pix(self.nside, test_b+np.pi/2, test_ell)
                 # Check if not masked
-                if (np.abs(test_b)*180./np.pi > 20 ):
+                if (np.abs(test_b)*180./np.pi > 20.):
                     badval = False
                     l = test_ell*180./np.pi
                     b = test_b*180./np.pi
