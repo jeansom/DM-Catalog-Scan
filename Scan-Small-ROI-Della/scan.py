@@ -25,7 +25,7 @@ from minuit_functions import call_ll
 
 # Additional modules
 sys.path.append(nptf_old_dir)
-sys.path.append(work_dir + '/Smooth-Maps')
+sys.path.append('./Smooth-Maps') # Different dir because recompile smooth king
 sys.path.append(work_dir + '/Make-DM-Maps')
 import fermi.fermi_plugin as fp
 import mkDMMaps

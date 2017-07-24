@@ -34,6 +34,16 @@ parser.add_argument("--diff",
                   action="store", dest="diff", default="p7",type=str)
 parser.add_argument("--randlocs",
                   action="store", dest="randlocs", default=0,type=int)
+parser.add_argument("--channel",
+                  action="store", dest="channel", default="b",type=str)
+parser.add_argument("--eventtype",
+                  action="store", dest="eventtype", default=0,type=int)
+parser.add_argument("--Burkert",
+                  action="store", dest="Burkert", default=0,type=int)
+parser.add_argument("--use_boost",
+                  action="store", dest="use_boost", default=0,type=int)
+parser.add_argument("--boost",
+                  action="store", dest="boost", default=1,type=int)
 
 results = parser.parse_args()
 iobj=results.iobj
@@ -51,6 +61,11 @@ mc_dm=results.mc_dm
 catalog_file=results.catalog_file
 diff=results.diff
 randlocs=results.randlocs
+channel=results.channel
+eventtype=results.eventtype
+Burkert=results.Burkert
+use_boost=results.use_boost
+boost=results.boost
 
 if load_dir != "":
   load_dir = work_dir + '/Scan-Small-ROI/data/' + str(load_dir) + "/"
@@ -71,4 +86,9 @@ Scan(perform_scan=perform_scan,
   verbose=True,
   catalog_file=catalog_file, 
   randlocs=randlocs,
+  channel=channel,
+  eventtype=eventtype,
+  Burkert=Burkert,
+  use_boost=use_boost,
+  boost=boost,
   save_dir=work_dir + '/Scan-Small-ROI/data/' + str(save_dir) + "/")

@@ -30,7 +30,8 @@ class LimitPlot():
         TSabove=16,
         xsecslim=10,
         elephant=True,
-        data_type="mc"):
+        data_type="mc",
+        file_prefix='LL2_TSmx_lim_b_o'):
 
         self.data_dir = data_dir # Directory where files are located
         self.halos_to_keep = halos_to_keep # Maximum number of halos to keep after all cuts
@@ -45,13 +46,11 @@ class LimitPlot():
         self.nonoverlapradius = nonoverlapradius # Radius of non-overlapping region
         self.data_type = data_type # "data", "Asimov" or "mc"
         self.halos_ran = halos_ran # Number of halos that actually exist as LLs
+        self.file_prefix = '/' +file_prefix # Number of halos that actually exist as LLs
         # cut_0p5 # Whether to exclude halos with 3FGL PSs within 0.5 deg
 
         if self.data_type in ["data", "Asimov"]:
             self.nmc = 1
-
-        if self.data_type != "skylocs":
-            self.data_dir += '/LL2_TSmx_lim_b_o'
 
         # Load the catalog and extract the b values for the latitude cut, l for the ROI cut (if specified),
         # Cut at number of halos run
@@ -66,6 +65,7 @@ class LimitPlot():
         else:
             self.good_vals = np.where(np.abs(self.b_array) > bcut)[0]
 
+        self.good_vals = self.good_vals[1:]
         self.n_good_halos = len(self.good_vals)
 
     def return_limits(self):
@@ -94,12 +94,15 @@ class LimitPlot():
 
         for imc in tqdm_notebook(range(self.nmc)):
 
+            if self.data_type == "skylocs":
+                self.ell_array, self.b_array = np.transpose(np.asarray(np.load(self.data_dir + "/lb_cat_mc"+str(imc)+".npy")))
+
             if self.data_type in ["data", "Asimov"]:
                 self.data_str = "_" + self.data_type
             elif self.data_type == "mc":
                 self.data_str = "_mc" + str(imc)
             elif self.data_type == "skylocs":
-                self.data_str = "_data"
+                self.data_str = "_data_skyloc" + str(imc)
 
             ################
             # Top 10 Limit #
@@ -141,19 +144,16 @@ class LimitPlot():
                 top10_count += 1
 
                 # Load limit and append where stronger
-                if self.data_type == 'skylocs':
-                    pp_file = np.load(self.data_dir + str(imc) + "/LL2_TSmx_lim_b_o"  + str(iobj) + self.data_str + '.npz')
-                else:
-                    pp_file = np.load(self.data_dir +  str(iobj) + self.data_str + '.npz')
+                pp_file = np.load(self.data_dir + self.file_prefix + str(iobj) + self.data_str + '.npz')
                 lim = pp_file['lim']
                 for im in range(len(self.marr)):
                     if lim[im] < best_lim[im]:
                         best_lim[im] = lim[im]
 
-                # If have 10 stop, otherwise continue
-                if top10_count == 10: 
-                    break
 
+                # If have 10 stop, otherwise continue
+                if top10_count == 50: 
+                    break
             # If doing elephant, use specified masses
             # otherwise, do all masses
             if self.elephant: 
@@ -179,10 +179,7 @@ class LimitPlot():
                 for iobj in self.good_vals:
 
                     # Load halo max TS, mloc and xsec values and see if passes cut
-                    if self.data_type == 'skylocs':
-                        pp_file = np.load(self.data_dir + str(imc) + "/LL2_TSmx_lim_b_o" + str(iobj) + self.data_str + '.npz')
-                    else:
-                        pp_file = np.load(self.data_dir +  str(iobj) + self.data_str + '.npz')
+                    pp_file = np.load(self.data_dir + self.file_prefix + str(iobj) + self.data_str + '.npz')
                     TSmx = pp_file['TSmx']
 
                     if halos_kept < 100: TSlim = self.TS100

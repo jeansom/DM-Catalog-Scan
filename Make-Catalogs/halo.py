@@ -18,7 +18,7 @@ class HaloModel:
     """ Halo modeling, from virial mass and redshift to a J-factor. See note for details/refs.
     """
     def __init__(self, boost_model='bartels', M_min_halo=1e-6*M_s, alpha='self-consistent',
-                 concentration_model='correa_darksky', data_folder='/group/hepheno/smsharma/Fermi-LSS/AdditionalData/',
+                 concentration_model='correa_darksky', data_folder='/tigress/nrodd/DM-Catalog-Scan/DataFiles/Misc/',
                  omega_m = 0.295, omega_lambda = 0.705, h = 0.688):
         """
         Default cosmology from DarkSky-400 values -- Table 1 of 1510.05651.

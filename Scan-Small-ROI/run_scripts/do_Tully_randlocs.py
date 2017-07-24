@@ -4,8 +4,8 @@ import numpy as np
 mcstart = 0
 nmc = 200
 
-halo_step=0
-i_start=20
+halo_step=20
+i_start=0
 n_steps=1
 
 loc=99
