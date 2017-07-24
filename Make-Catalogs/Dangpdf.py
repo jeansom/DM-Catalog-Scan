@@ -19,9 +19,12 @@ import numpy as np
 import halo as hl
 
 class Dc:
-    def __init__(self):
+    def __init__(self, hm):
+        """ Pass an instance of HaloModel in as hm, with a boost, cosmology, and
+            concentration defined.
+        """
 
-        self.hm = hl.HaloModel(boost_model='bartels', concentration_model='correa_Planck15')
+        self.hm = hm
 
     def zfull(self, x, dA):
         """ z = log10(D) for a given x and dA for the full halo

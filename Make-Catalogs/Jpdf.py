@@ -17,12 +17,14 @@
 #  - y = log10(c)
 
 import numpy as np
-import halo as hl
 
 class Jc:
-    def __init__(self):
+    def __init__(self, hm):
+        """ Pass an instance of HaloModel in as hm, with a boost, cosmology, and
+            concentration defined.
+        """
         
-        self.hm = hl.HaloModel(boost_model='bartels', concentration_model='correa_Planck15')
+        self.hm = hm 
 
     def z(self, x, y, dA, rvir, red):
         """ z = log10(J) for a given x, y, dA and rvir for the boosted case

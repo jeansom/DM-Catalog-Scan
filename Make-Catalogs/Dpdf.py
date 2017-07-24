@@ -16,13 +16,15 @@
 #  - x = log10(M)
 
 import numpy as np
-import halo as hl
 
 class Dc:
-    def __init__(self):
-        
-        self.hm = hl.HaloModel(boost_model='bartels', concentration_model='correa_Planck15')
+    def __init__(self, hm):
+        """ Pass an instance of HaloModel in as hm, with a boost, cosmology, and
+            concentration defined.
+        """
 
+        self.hm = hm
+        
     def z(self, x, dA):
         """ z = log10(D) for a given x and dA
         """
