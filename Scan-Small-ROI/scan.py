@@ -20,6 +20,7 @@ from astropy.coordinates import SkyCoord, Distance
 from astropy.cosmology import Planck15
 import healpy as hp
 from tqdm import *
+from astropy.io import fits
 
 from local_dirs import *
 from minuit_functions import call_ll
@@ -39,7 +40,7 @@ from NPTFit import create_mask as cm # module for creating the mask
 
 
 class Scan():
-    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=7, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, use_boost=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1, randlocs=False):
+    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, use_boost=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1, randlocs=False, mc_string = "10000dm", moreA=0):
         
         self.catalog = pd.read_csv(work_dir + '/DataFiles/Catalogs/' + catalog_file) # Halo catalog
 
@@ -63,11 +64,13 @@ class Scan():
         self.save_dir = save_dir # Directory to save output files
         self.load_dir = load_dir # Directory to load intensity LLs from
         self.randlocs = randlocs # Whether to pick random location
+        self.mc_string = mc_string # Whether to pick random location
+        self.moreA = moreA # Whether to use a denser array of A values
 
         if mc_dm == -1:
             self.dm_string = "nodm"
         else:
-            self.dm_string = "10000dm" + str(mc_dm)
+            self.dm_string = self.mc_string + str(mc_dm)
 
         if self.save_dir != "":
             if not os.path.exists(self.save_dir):
@@ -146,10 +149,11 @@ class Scan():
                 test_ell = np.random.uniform(0.,2*np.pi)
                 test_b = np.arccos(np.random.uniform(-1.,1.))-np.pi/2.
                 test_pixval = hp.ang2pix(self.nside, test_b+np.pi/2, test_ell)
-                ps0p5_mask = np.load(work_dir + '/DataFiles/Misc/mask0p5_3FGL.npy') > 0
+                # ps0p5_mask = np.load(work_dir + '/DataFiles/Misc/mask0p5_3FGL.npy') > 0
 
                 # Check if not masked with plan or PS mask
-                if ( (np.abs(test_b)*180./np.pi > 20. ) & (ps0p5_mask[test_pixval] == 0)):
+                if ( (np.abs(test_b)*180./np.pi > 20. )):
+                # if ( (np.abs(test_b)*180./np.pi > 20. ) & (ps0p5_mask[test_pixval] == 0)):
                     badval = False
                     l = test_ell*180./np.pi
                     b = test_b*180./np.pi
@@ -167,12 +171,15 @@ class Scan():
         # Loop over energy bins to get xsec LLs #
         #########################################
 
-        A_ary = 10**np.linspace(-6,6,200)
+        if self.moreA:
+            A_ary = 10**np.linspace(-6,6,2000)
+        else:
+            A_ary = 10**np.linspace(-6,6,200)
         LL_inten_ary = np.zeros((len(self.ebins)-1,len(A_ary)))
         inten_ary = np.zeros((len(self.ebins)-1,len(A_ary)))
 
         # 10 deg mask for the analysis
-        analysis_mask = cm.make_mask_total(mask_ring = True, inner = 0, outer = 10, ring_b = b, ring_l = l)
+        analysis_mask_base = cm.make_mask_total(mask_ring = True, inner = 0, outer = 10, ring_b = b, ring_l = l)
 
         for iebin, ebin in tqdm(enumerate(np.arange(self.emin,self.emax+1)), disable = 1 - self.verbose):
             
@@ -185,8 +192,14 @@ class Scan():
 
             if self.imc != -1:
                 data = np.load(mc_dir + 'MC_allhalos_p7_' + self.dm_string + '_v' + str(self.imc)+'.npy')[ebin].astype(np.float64)
+                analysis_mask = analysis_mask_base
             else:
                 data = f_global.CTB_count_maps[ebin].astype(np.float64)
+                # Add large scale mask to analysis mask
+                els_str = ['0.20000000','0.25178508','0.31697864','0.39905246','0.50237729','0.63245553','0.79621434','1.0023745','1.2619147','1.5886565','2.0000000','2.5178508','3.1697864','3.9905246','5.0237729','6.3245553','7.9621434','10.023745','12.619147','15.886565','20.000000','25.178508','31.697864','39.905246','50.237729','63.245553','79.621434','100.23745','126.19147','158.86565','200.00000','251.78508','316.97864','399.05246','502.37729','632.45553','796.21434','1002.3745','1261.9147','1588.6565']
+                ls_mask_load = fits.open('/tigress/nrodd/LargeObjMask/Allpscmask_3FGL-energy'+els_str[ebin]+'large-obj.fits')
+                ls_mask = np.array([np.round(val) for val in hp.ud_grade(ls_mask_load[0].data,self.nside,power=0)])
+                analysis_mask = np.vectorize(bool)(analysis_mask_base+ls_mask)
 
             fermi_exposure = f_global.CTB_exposure_maps[ebin]
 

@@ -1,7 +1,7 @@
 import os, sys
 import numpy as np
 
-mcstart = 0
+mcstart = 10
 nmc = 10
 
 halo_step=50
@@ -22,7 +22,7 @@ for mci in range(mcstart,mcstart+nmc):
 ##SBATCH --mail-type=begin
 ##SBATCH --mail-type=end
 ##SBATCH --mail-user=smsharma@princeton.edu
-##SBATCH -C ivy
+#SBATCH -C ivy
 
 export PATH="/tigress/smsharma/anaconda2/bin:$PATH"
 source activate venv_py27

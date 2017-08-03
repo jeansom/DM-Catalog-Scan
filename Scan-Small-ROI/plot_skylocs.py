@@ -31,7 +31,9 @@ class LimitPlot():
         xsecslim=10,
         elephant=True,
         data_type="mc",
-        file_prefix='LL2_TSmx_lim_b_o'):
+        file_prefix='LL2_TSmx_lim_b_o',
+        skip_halos=[0],
+        custom_good_vals=[]):
 
         self.data_dir = data_dir # Directory where files are located
         self.halos_to_keep = halos_to_keep # Maximum number of halos to keep after all cuts
@@ -48,6 +50,8 @@ class LimitPlot():
         self.halos_ran = halos_ran # Number of halos that actually exist as LLs
         self.file_prefix = '/' +file_prefix # Number of halos that actually exist as LLs
         # cut_0p5 # Whether to exclude halos with 3FGL PSs within 0.5 deg
+        self.skip_halos = skip_halos # Which halos to ignore
+        self.custom_good_vals = custom_good_vals # Which halos to ignore
 
         if self.data_type in ["data", "Asimov"]:
             self.nmc = 1
@@ -65,7 +69,10 @@ class LimitPlot():
         else:
             self.good_vals = np.where(np.abs(self.b_array) > bcut)[0]
 
-        self.good_vals = self.good_vals[1:]
+        if self.custom_good_vals != []:
+            self.good_vals = self.custom_good_vals
+
+        self.good_vals = [ih for ih in self.good_vals if ih not in self.skip_halos]#[1:]
         self.n_good_halos = len(self.good_vals)
 
     def return_limits(self):
@@ -90,6 +97,7 @@ class LimitPlot():
 
         MC_limit_arr = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
         xsec_at_maxTS_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
+        maxTS_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
         halos_passed = np.zeros(self.nmc)
 
         for imc in tqdm_notebook(range(self.nmc)):
@@ -115,7 +123,7 @@ class LimitPlot():
             best_lim = np.zeros(len(self.marr))+1e-18
             top10_count = 0
 
-            #for iobj in tqdm_notebook(range(self.n_good_halos)):
+            # for iobj in tqdm_notebook(range(self.n_good_halos)):
             for iobj in range(self.n_good_halos):
 
                 # Skip if not a good object
@@ -161,6 +169,8 @@ class LimitPlot():
             else: 
                 masses = np.arange(len(self.marr))
 
+            # print best_lim
+
             #for im in tqdm_notebook(masses):
             for im in masses:
 
@@ -176,7 +186,10 @@ class LimitPlot():
                 LL2_cumulative = np.zeros(len(xsecs))
 
                 #for iobj in tqdm_notebook(self.good_vals):
-                for iobj in self.good_vals:
+
+                self.passed_halos = []
+
+                for iobj in (self.good_vals):
 
                     # Load halo max TS, mloc and xsec values and see if passes cut
                     pp_file = np.load(self.data_dir + self.file_prefix + str(iobj) + self.data_str + '.npz')
@@ -218,6 +231,8 @@ class LimitPlot():
 
                     max_loc = np.argmax(TS_xsec_ary)
                     max_TS = TS_xsec_ary[max_loc]
+
+                    # print max_TS
                     
                     for xi in range(max_loc,len(xsecs)):
                         val = TS_xsec_ary[xi] - max_TS
@@ -228,15 +243,19 @@ class LimitPlot():
                             break
                     
                     xsec_at_maxTS_ary[halos_kept, im, imc] = xsecs[max_loc]
+                    maxTS_ary[halos_kept, im, imc] = max_TS
 
                     # Passed, add to counter
                     halos_kept += 1
+
+                    # If passed, add to list of passed halos
+                    self.passed_halos.append(iobj)
                     
                     # If have enough halos stop, otherwise continue
                     if halos_kept == self.halos_to_keep: 
                         break
 
-                halos_passed[imc] = halos_kept
+                halos_passed[imc] = int(halos_kept)
             
             # Going to either specified halos to keep or minimum of passed halos
             halos_to_plot = int(min([min(halos_passed), self.halos_to_keep]))
@@ -245,8 +264,100 @@ class LimitPlot():
         # Return arrays #
         #################
 
+        if self.data_type in ["mc","skylocs"]:
+            for imc in range(self.nmc):
+                for ih in range(int(halos_passed[imc]), self.halos_to_keep):
+                    MC_limit_arr[ih,:,imc] = MC_limit_arr[int(halos_passed[imc]) - 1,:,imc]
+                    xsec_at_maxTS_ary[ih,:,imc] = xsec_at_maxTS_ary[int(halos_passed[imc]) - 1,:,imc]
+                    maxTS_ary[ih,:,imc] = maxTS_ary[int(halos_passed[imc]) - 1,:,imc]
+            halos_to_plot = self.halos_to_keep
+
         # Return limit and maxTS arrays
-        return MC_limit_arr[:halos_to_plot], xsec_at_maxTS_ary[:halos_to_plot]
+        return MC_limit_arr[:halos_to_plot], xsec_at_maxTS_ary[:halos_to_plot], maxTS_ary[:halos_to_plot]
+
+    def return_limits_single(self, iobj):
+        """
+        Returns an array of limits of shape (halos, masses, MC)
+        that can be processed to make elephant or limit plots
+        """
+
+        # Define the xsec and mass array, these should be the same as used during the runs
+        xsecs = np.logspace(-33,-18,301)
+        self.marr = np.array([1.00000000e+01,1.50000000e+01,2.00000000e+01,2.50000000e+01,3.00000000e+01,
+                         4.00000000e+01,5.00000000e+01,6.00000000e+01,7.00000000e+01,8.00000000e+01,
+                         9.00000000e+01,1.00000000e+02,1.10000000e+02,1.20000000e+02,1.30000000e+02,
+                         1.40000000e+02,1.50000000e+02,1.60000000e+02,1.80000000e+02,2.00000000e+02,
+                         2.20000000e+02,2.40000000e+02,2.60000000e+02,2.80000000e+02,3.00000000e+02,
+                         3.30000000e+02,3.60000000e+02,4.00000000e+02,4.50000000e+02,5.00000000e+02,
+                         5.50000000e+02,6.00000000e+02,6.50000000e+02,7.00000000e+02,7.50000000e+02,
+                         8.00000000e+02,9.00000000e+02,1.00000000e+03,1.10000000e+03,1.20000000e+03,
+                         1.30000000e+03,1.50000000e+03,1.70000000e+03,2.00000000e+03,2.50000000e+03,
+                         3.00000000e+03,4.00000000e+03,5.00000000e+03,6.00000000e+03,7.00000000e+03,
+                         8.00000000e+03,9.00000000e+03,1.00000000e+04])
+
+        MC_limit_arr = np.zeros((len(self.marr),self.nmc))
+        xsec_at_maxTS_ary = np.zeros((len(self.marr),self.nmc))
+        maxTS_ary = np.zeros((len(self.marr),self.nmc))
+        halos_passed = np.zeros(self.nmc)
+
+        for imc in tqdm_notebook(range(self.nmc)):
+
+            if self.data_type == "skylocs":
+                self.ell_array, self.b_array = np.transpose(np.asarray(np.load(self.data_dir + "/lb_cat_mc"+str(imc)+".npy")))
+
+            if self.data_type in ["data", "Asimov"]:
+                self.data_str = "_" + self.data_type
+            elif self.data_type == "mc":
+                self.data_str = "_mc" + str(imc)
+            elif self.data_type == "skylocs":
+                self.data_str = "_data_skyloc" + str(imc)
+
+            # If doing elephant, use specified masses
+            # otherwise, do all masses
+            if self.elephant: 
+                masses = self.elephantm
+            else: 
+                masses = np.arange(len(self.marr))
+
+            #for im in tqdm_notebook(masses):
+            for im in masses:
+
+                ##################
+                # Combined Limit #
+                ##################
+
+                # Using the top10 limit as a baseline for cutting, compute the combined limit
+                LL2_cumulative = np.zeros(len(xsecs))
+
+                # Load halo max TS, mloc and xsec values and see if passes cut
+                pp_file = np.load(self.data_dir + self.file_prefix + str(iobj) + self.data_str + '.npz')
+
+                # Add this objects LL at the relevant mass to the cumulative LL 
+                # and then calculate the limit for this number of halos
+                LL2_cumulative = pp_file['LL2'][im]
+
+                TS_xsec_ary = LL2_cumulative - LL2_cumulative[0]
+
+                max_loc = np.argmax(TS_xsec_ary)
+                max_TS = TS_xsec_ary[max_loc]
+                
+                for xi in range(max_loc,len(xsecs)):
+                    val = TS_xsec_ary[xi] - max_TS
+                    if val < -2.71:
+                        # Save log10 of the limit
+                        scale = (TS_xsec_ary[xi-1]-max_TS+2.71)/(TS_xsec_ary[xi-1]-TS_xsec_ary[xi])
+                        MC_limit_arr[im, imc] = np.log10(xsecs[xi-1])+scale*(np.log10(xsecs[xi])-np.log10(xsecs[xi-1]))
+                        break
+                
+                xsec_at_maxTS_ary[im, imc] = xsecs[max_loc]
+                maxTS_ary[im, imc] = max_TS
+
+        #################
+        # Return arrays #
+        #################
+
+        # Return limit and maxTS arrays
+        return MC_limit_arr, xsec_at_maxTS_ary, maxTS_ary
 
     def files_exist(self):
         """

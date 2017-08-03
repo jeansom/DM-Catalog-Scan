@@ -44,6 +44,14 @@ parser.add_argument("--use_boost",
                   action="store", dest="use_boost", default=0,type=int)
 parser.add_argument("--boost",
                   action="store", dest="boost", default=1,type=int)
+parser.add_argument("--mc_string",
+                  action="store", dest="mc_string", default="10000dm",type=str)
+parser.add_argument("--moreA",
+                  action="store", dest="moreA", default=0,type=int)
+parser.add_argument("--emin",
+                  action="store", dest="emin", default=0,type=int)
+parser.add_argument("--emax",
+                  action="store", dest="emax", default=39,type=int)
 
 results = parser.parse_args()
 iobj=results.iobj
@@ -66,12 +74,17 @@ eventtype=results.eventtype
 Burkert=results.Burkert
 use_boost=results.use_boost
 boost=results.boost
+mc_string=results.mc_string
+moreA=results.moreA
+emin=results.emin
+emax=results.emax
 
 if load_dir != "":
   load_dir = work_dir + '/Scan-Small-ROI/data/' + str(load_dir) + "/"
 else:
   load_dir = None
 
+print "saving in", work_dir + '/Scan-Small-ROI/data/' + str(save_dir) + "/"
 Scan(perform_scan=perform_scan, 
   perform_postprocessing=perform_postprocessing, 
   imc=imc, 
@@ -91,4 +104,8 @@ Scan(perform_scan=perform_scan,
   Burkert=Burkert,
   use_boost=use_boost,
   boost=boost,
+  mc_string=mc_string,
+  moreA=moreA,
+  emin=emin,
+  emax=emax,
   save_dir=work_dir + '/Scan-Small-ROI/data/' + str(save_dir) + "/")

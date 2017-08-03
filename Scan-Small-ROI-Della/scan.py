@@ -17,6 +17,7 @@ import pandas as pd
 from scipy import interpolate, integrate
 from astropy import units as u
 from astropy.coordinates import SkyCoord, Distance
+from astropy.cosmology import Planck15
 import healpy as hp
 from tqdm import *
 
@@ -38,9 +39,11 @@ from NPTFit import create_mask as cm # module for creating the mask
 
 
 class Scan():
-    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1):
-        
+    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, use_boost=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1, randlocs=False):
+
+        print("Loading catalog...")
         self.catalog = pd.read_csv(work_dir + '/DataFiles/Catalogs/' + catalog_file) # Halo catalog
+        print("...done")
 
         self.iobj = iobj # Objects index to scan
         self.imc = imc # MC index
@@ -53,6 +56,7 @@ class Scan():
         self.diff = diff # Diffuse model -- p6v11, p7, p8
         self.Burkert = Burkert # Whether to use a Burkert (True) or NFW (False)
         self.boost = boost # Whether to use boosted or unboosted J
+        self.use_boost = use_boost # Whether to put down a boosted profile
         self.float_ps_together = float_ps_together # Whether to float the whole PS map
         self.Asimov = Asimov # Whether to use the Asimov expectation
         self.floatDM = floatDM # Whether to float the DM in the initial scan
@@ -60,11 +64,14 @@ class Scan():
         self.noJprof = noJprof # Whether to not do a profile over the J uncertainty
         self.save_dir = save_dir # Directory to save output files
         self.load_dir = load_dir # Directory to load intensity LLs from
+        self.randlocs = randlocs # Whether to pick random location
+
+        print("Starting!")
 
         if mc_dm == -1:
             self.dm_string = "nodm"
         else:
-            self.dm_string = "dm" + str(mc_dm)
+            self.dm_string = "10000dm" + str(mc_dm)
 
         if self.save_dir != "":
             if not os.path.exists(self.save_dir):
@@ -78,6 +85,7 @@ class Scan():
         if self.load_dir is None:
             self.load_dir = self.save_dir
 
+        print("Loading 3FGL...")
         # If floating sources individually, find nearby 3FGL PSs
         if not self.float_ps_together:
             source_3fg_df = pd.read_csv(work_dir + '/DataFiles/Catalogs/3fgl.dat', sep='|', comment='#')
@@ -90,6 +98,7 @@ class Scan():
             source_3fg_df = source_3fg_df.convert_objects(convert_numeric=True)
             # Coordinates of nearby 3FGL
             self.c3 = SkyCoord("galactic", l=source_3fg_df['_Lii']*u.deg, b=source_3fg_df['_Bii']*u.deg)
+        print("...done")
 
         self.ebins = 2*np.logspace(-1,3,41)[self.emin:self.emax+2]
 
@@ -108,12 +117,16 @@ class Scan():
 
     def scan(self):
 
+        print("Getting into scan")
+
         ################
         # Fermi plugin #
         ################
-
+        
+        print("Loading Fermi plugin...")
         # Load the Fermi plugin - always load all energy bins, extract what is needed
         f_global = fp.fermi_plugin(maps_dir,fermi_data_dir=fermi_data_dir,work_dir=work_dir,CTB_en_min=0,CTB_en_max=40,nside=self.nside,eventclass=self.eventclass,eventtype=self.eventtype,newstyle=1,data_July16=True)
+        print("... done")
 
         # Load necessary templates
         f_global.add_diffuse_newstyle(comp = self.diff,eventclass = self.eventclass, eventtype = self.eventtype) 
@@ -134,15 +147,33 @@ class Scan():
         # Get DM halo map #
         ###################
 
-        l = self.catalog.l.values[self.iobj]
-        b = self.catalog.b.values[self.iobj]
-        rs = self.catalog.rvir_inf.values[self.iobj]/self.catalog.cvir_inf.values[self.iobj]*1e-3
+        print("Getting halo map...")
+        if not self.randlocs: # If doing random locations
+            l = self.catalog.l.values[self.iobj]
+            b = self.catalog.b.values[self.iobj]
+        else:
+            badval = True
+            while (badval):
+                test_ell = np.random.uniform(0.,2*np.pi)
+                test_b = np.arccos(np.random.uniform(-1.,1.))-np.pi/2.
+                test_pixval = hp.ang2pix(self.nside, test_b+np.pi/2, test_ell)
+                ps0p5_mask = np.load(work_dir + '/DataFiles/Misc/mask0p5_3FGL.npy') > 0
+
+                # Check if not masked with plan or PS mask
+                if ( (np.abs(test_b)*180./np.pi > 20. ) & (ps0p5_mask[test_pixval] == 0)):
+                    badval = False
+                    l = test_ell*180./np.pi
+                    b = test_b*180./np.pi
+            np.savetxt(self.save_dir + "/lb_obj"+str(self.iobj) + ".dat", np.array([l, b]))
+
+        rs = self.catalog.rs.values[self.iobj]*1e-3
         if self.boost:
             J0 = 10**self.catalog.mulog10J_inf.values[self.iobj]
         else:
             J0 = 10**self.catalog.mulog10Jnb_inf.values[self.iobj]
-        mk = mkDMMaps.mkDMMaps(z = self.catalog.z[self.iobj], r_s = rs , J_0 = J0, ell = l*np.pi/180, b = b*np.pi/180, nside=self.nside, Burkert=self.Burkert)
+        mk = mkDMMaps.mkDMMaps(z = self.catalog.z[self.iobj], r_s = rs , J_0 = J0, ell = l*np.pi/180, b = b*np.pi/180, nside=self.nside, use_boost=self.use_boost, Burkert=self.Burkert)
         DM_template_base = mk.map
+        print("...done")
 
         #########################################
         # Loop over energy bins to get xsec LLs #
@@ -164,7 +195,7 @@ class Scan():
             if self.verbose:
                 print "At bin", ebin
 
-            if self.imc is not None:
+            if self.imc != -1:
                 data = np.load(mc_dir + 'MC_allhalos_p7_' + self.dm_string + '_v' + str(self.imc)+'.npy')[ebin].astype(np.float64)
             else:
                 data = f_global.CTB_count_maps[ebin].astype(np.float64)
@@ -172,9 +203,12 @@ class Scan():
             fermi_exposure = f_global.CTB_exposure_maps[ebin]
 
             DM_template = DM_template_base*fermi_exposure/np.sum(DM_template_base*fermi_exposure)
+            print("Loading smoothing class...")
             ksi = ks.king_smooth(maps_dir, ebin, self.eventclass, self.eventtype, threads=1)
+            print("...done!")
+            print("Beginning to smooth...")
             DM_template_smoothed = ksi.smooth_the_map(DM_template)
-
+            print("...done!")
             DM_intensity_base = np.sum(DM_template_smoothed/fermi_exposure)
             
             dif = f_global.template_dict[self.diff][ebin]
@@ -203,6 +237,14 @@ class Scan():
             
             if (np.sum(bub*np.logical_not(analysis_mask)) != 0):
                 n.add_poiss_model('bub', '$A_\mathrm{bub}$', [0,10], False)
+
+            # # Add PS at halo location
+            # ps_halo_map = np.zeros(hp.nside2npix(self.nside))
+            # ps_halo_idx = hp.ang2pix(self.nside, np.pi/2. - b*np.pi/180., l*np.pi/180.) # ell and b are in rad
+            # ps_halo_map[ps_halo_idx] = 1.
+            # ps_halo_map_smoothed = ksi.smooth_the_map(ps_halo_map) # smooth it
+            # n.add_template(ps_halo_map_smoothed,'ps_halo')
+            # n.add_poiss_model('ps_halo', 'ps_halo', [0,100], False)
 
             if self.floatDM:
                 if ebin >= 7: 
@@ -262,7 +304,7 @@ class Scan():
                 z.update(step_size_dict)
                 f = call_ll(len(keys),n.ll,keys)
                 m = Minuit(f,**z)
-                m.migrad(ncall=10000, precision=1e-14)
+                m.migrad(ncall=30000, precision=1e-14)
                 
             ###################################
             # NPTFit fixed DM and bkg profile #
@@ -320,9 +362,12 @@ class Scan():
 
         m_ary = np.array([1.00000000e+01,1.50000000e+01,2.00000000e+01,2.50000000e+01,3.00000000e+01,4.00000000e+01,5.00000000e+01,6.00000000e+01,7.00000000e+01,8.00000000e+01,9.00000000e+01,1.00000000e+02,1.10000000e+02,1.20000000e+02,1.30000000e+02,1.40000000e+02,1.50000000e+02,1.60000000e+02,1.80000000e+02,2.00000000e+02,2.20000000e+02,2.40000000e+02,2.60000000e+02,2.80000000e+02,3.00000000e+02,3.30000000e+02,3.60000000e+02,4.00000000e+02,4.50000000e+02,5.00000000e+02,5.50000000e+02,6.00000000e+02,6.50000000e+02,7.00000000e+02,7.50000000e+02,8.00000000e+02,9.00000000e+02,1.00000000e+03,1.10000000e+03,1.20000000e+03,1.30000000e+03,1.50000000e+03,1.70000000e+03,2.00000000e+03,2.50000000e+03,3.00000000e+03,4.00000000e+03,5.00000000e+03,6.00000000e+03,7.00000000e+03,8.00000000e+03,9.00000000e+03,1.00000000e+04])
 
+        if self.channel == 'mu': self.channel = '\\[Mu]'
+        if self.channel == 'tau': self.channel = '\\[Tau]'
+
         # If b use the precomputed value
         if self.channel == 'b':
-            PPnoxsec_ary = np.load(work_dir + '/DataFiles//PP-Factor/PPnoxsec_b_ary.npy')
+            PPnoxsec_ary = np.load(work_dir + '/DataFiles//PP-Factor/PPnoxsec_b_ary.npy')[:,self.emin:self.emax+2]
         else:
             dNdLogx_df = pd.read_csv(work_dir + '/DataFiles//PP-Factor/AtProduction_gammas.dat', delim_whitespace=True)
             
@@ -363,7 +408,22 @@ class Scan():
         # Interpolate intensity LLs to get xsec LLs #
         #############################################
 
-        LL_inten_file  =  np.load(self.load_dir + 'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
+        # If randloc load a representative halo in size at 
+        if self.randlocs:
+            # Representative values
+            rep_angext = np.array([0.02785567,0.12069876,0.21354185,0.30638494,0.39922802,0.49207111,0.5849142,0.67775728,0.77060037,0.86344346,0.95628654,1.04912963,1.14197272,1.2348158,1.32765889,1.42050198,1.51334507,1.60618815,1.69903124,1.79187433])
+            obj_angext = 2*self.catalog[u'rs'].values[self.iobj] / \
+                         (Planck15.angular_diameter_distance(self.catalog[u'z'].values[self.iobj]).value*1000) \
+                         * 180./np.pi
+            rep_index = (np.abs(rep_angext-obj_angext)).argmin()
+            
+            # Choose a random sky location
+            skyloc = np.random.randint(200) 
+            np.savetxt(self.save_dir + "/skyloc_obj"+str(self.iobj)+".txt",[skyloc])
+            LL_inten_file = np.load(self.load_dir[:-1] + str(skyloc) + '/LL_inten_o'+str(rep_index)+'_data.npz')
+        else:
+            LL_inten_file = np.load(self.load_dir+'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
+
         LL_inten_ary, inten_ary = LL_inten_file['LL'], LL_inten_file['intens']
         xsecs = np.logspace(-33,-18,301)
         LL2_xsec_m_ary = np.zeros((len(m_ary),len(xsecs))) # 2 x LL, ready for TS
@@ -404,7 +464,7 @@ class Scan():
                 if val < -2.71:
                     scale = (TS_xsec_ary[xi-1]-max_TS+2.71)/(TS_xsec_ary[xi-1]-TS_xsec_ary[xi])
                     lim_ary[im] = 10**(np.log10(xsecs[xi-1])+scale*(np.log10(xsecs[xi])-np.log10(xsecs[xi-1])))
-                    break
+                    break  
 
         #####################################
         # Setup save string and output data #

@@ -23,7 +23,7 @@ for mci in [-1]:
 ##SBATCH --mail-user=smsharma@princeton.edu
 ##SBATCH -C ivy
 
-export PATH="/tigress/smsharma/anaconda2/bin:$PATH"
+export PATH="/tigress/smsharma/anaconda2_della5/bin:$PATH"
 source activate venv_py27
 # module load openmpi/gcc/1.6.5/64
 module load rh/devtoolset/4
@@ -34,9 +34,9 @@ export LD_LIBRARY_PATH=$(pwd)/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 
 cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
-        batch2 ='start_idx='+str(halo_start)+'\n'
+        batch2 ='start_idx='+str(halo_start)+'\n'+'catalog_file=2MRSLocalTully_ALL_DATAPAPER_Planck15_v7.csv'+'\n'
         batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --diff p8 --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --Burkert 1 --iobj \$1 --save_dir Tully_Burkert --float_ps_together 0 --Asimov 0 --floatDM 1" > ./run_scripts/conf/run-Data-indiv-Burkert-'''+str(it)+'''-v'''+str(mci)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --diff p8 --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --Burkert 1 --iobj \$1 --save_dir Tully_Burkert --float_ps_together 0 --Asimov 0 --floatDM 1" > ./run_scripts/conf/run-Data-indiv-Burkert-'''+str(it)+'''-v'''+str(mci)+'''.sh
 chmod u+x ./run_scripts/conf/run-Data-indiv-Burkert-'''+str(it)+'''-v'''+str(mci)+'''.sh
 '''
         runpart='echo   0-49  ./run_scripts/conf/run-Data-indiv-Burkert-'+str(it)+'-v'+str(mci)+'.sh %t  > ./run_scripts/conf/run-Data-indiv-Burkert-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 ./run_scripts/conf/run-Data-indiv-Burkert-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'

@@ -1,8 +1,8 @@
 import os, sys
 import numpy as np
 
-mcstart = 0
-nmc = 200
+mcstart = 1000
+nmc = 500
 
 halo_step=20
 i_start=0
@@ -26,7 +26,7 @@ for mci in range(mcstart,mcstart+nmc):
 ##SBATCH -C ivy
 
 export PATH="/tigress/smsharma/anaconda2/bin:$PATH"
-source activate venv_py27
+source activate # venv_py27
 module load rh/devtoolset/4
 module load intel-mpi/gcc/2017.2/64
 

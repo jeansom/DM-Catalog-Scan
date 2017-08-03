@@ -12,7 +12,7 @@ batch='''#!/bin/bash
 ##SBATCH --mail-user=smsharma@princeton.edu
 ##SBATCH -C ivy
 
-export PATH="/tigress/smsharma/anaconda2/bin:$PATH"
+export PATH="/tigress/smsharma/anaconda2_della5/bin:$PATH"
 source activate venv_py27
 
 cd  /tigress/lnecib/MultiNest
