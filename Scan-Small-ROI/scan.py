@@ -40,7 +40,7 @@ from NPTFit import create_mask as cm # module for creating the mask
 
 
 class Scan():
-    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, use_boost=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1, randlocs=False, mc_string = "10000dm", moreA=0):
+    def __init__(self, perform_scan=0, perform_postprocessing=0, save_dir="", load_dir=None,imc=0, iobj=0, emin=0, emax=39, channel='b', nside=128, eventclass=5, eventtype=0, diff='p7', catalog_file='DarkSky_ALL_200,200,200_v3.csv', Burkert=0, use_boost=0, boost=1, float_ps_together=1, Asimov=0, floatDM=1, verbose=0, noJprof=0, mc_dm=-1, randlocs=False, mc_string = "10000dm", moreA=0, restrict_pp=0):
         
         self.catalog = pd.read_csv(work_dir + '/DataFiles/Catalogs/' + catalog_file) # Halo catalog
 
@@ -66,6 +66,7 @@ class Scan():
         self.randlocs = randlocs # Whether to pick random location
         self.mc_string = mc_string # Whether to pick random location
         self.moreA = moreA # Whether to use a denser array of A values
+        self.restrict_pp = restrict_pp # Restrict the post processing to fewer ebins
 
         if mc_dm == -1:
             self.dm_string = "nodm"
@@ -422,6 +423,12 @@ class Scan():
             LL_inten_file = np.load(self.load_dir+'LL_inten_o'+str(self.iobj)+self.mc_tag+'.npz')
 
         LL_inten_ary, inten_ary = LL_inten_file['LL'], LL_inten_file['intens']
+        
+        if self.restrict_pp:
+            # Initial run done with all energy bins, restrict!
+            LL_inten_ary = LL_inten_ary[emin:emax+1]
+            inten_ary = inten_ary[emin:emax+1]
+
         xsecs = np.logspace(-33,-18,301)
         LL2_xsec_m_ary = np.zeros((len(m_ary),len(xsecs))) # 2 x LL, ready for TS
 
