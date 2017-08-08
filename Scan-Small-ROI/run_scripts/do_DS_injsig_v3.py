@@ -5,7 +5,7 @@ mcstart = 12
 nmc = 8
 
 halo_step=50
-i_start=0
+i_start=10
 n_steps=10
 
 for mci in range(mcstart,mcstart+nmc):
@@ -22,7 +22,7 @@ for mci in range(mcstart,mcstart+nmc):
 ##SBATCH --mail-type=begin
 ##SBATCH --mail-type=end
 ##SBATCH --mail-user=smsharma@princeton.edu
-##SBATCH -C ivy
+#SBATCH -C ivy
 
 export PATH="/tigress/smsharma/anaconda2/bin:$PATH"
 source activate # venv_py27
@@ -37,13 +37,13 @@ cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
             batch2 ='start_idx='+str(halo_start)+'\n'
             batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --mc_string dm --mc_dm '''+str(imc_dm)+''' --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --iobj \$1 --save_dir DarkSky_sid_loc0_inj100_rerun_dm'''+str(imc_dm)+''' --float_ps_together 0 --Asimov 0 --floatDM 1" > run_scripts/conf/rerun2-DS-inj-100GeV-'''+str(it)+'''-v'''+str(mci)+'''-dm'''+str(imc_dm)+ '''.sh
-chmod u+x run_scripts/conf/rerun2-DS-inj-100GeV-'''+str(it)+'''-v'''+str(mci)+'-dm'+str(imc_dm)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --mc_string dm --mc_dm '''+str(imc_dm)+''' --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --iobj \$1 --save_dir DarkSky_sid_loc0_inj100_rerun_dm'''+str(imc_dm)+''' --float_ps_together 0 --Asimov 0 --floatDM 1" > run_scripts/conf/rerun-DS-inj-100GeV-'''+str(it)+'''-v'''+str(mci)+'''-dm'''+str(imc_dm)+ '''.sh
+chmod u+x run_scripts/conf/rerun-DS-inj-100GeV-'''+str(it)+'''-v'''+str(mci)+'-dm'+str(imc_dm)+'''.sh
 '''
-            runpart='echo   0-49  ./run_scripts/conf/rerun2-DS-inj-100GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.sh %t  > run_scripts/conf/rerun2-DS-inj-100GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 run_scripts/conf/rerun2-DS-inj-100GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'
+            runpart='echo   0-49  ./run_scripts/conf/rerun-DS-inj-100GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.sh %t  > run_scripts/conf/rerun-DS-inj-100GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 run_scripts/conf/rerun-DS-inj-100GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'
 
             batchn = batch1+batch2 + batch3 + runpart
-            fname = "./batch/rerun2-DS-inj-100GeV-"+str(it)+"-v"+str(mci)+'-dm'+str(imc_dm)+ ".batch"
+            fname = "./batch/rerun-DS-inj-100GeV-"+str(it)+"-v"+str(mci)+'-dm'+str(imc_dm)+ ".batch"
             f=open(fname, "w")
             f.write(batchn)
             f.close()

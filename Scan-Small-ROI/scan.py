@@ -426,8 +426,8 @@ class Scan():
         
         if self.restrict_pp:
             # Initial run done with all energy bins, restrict!
-            LL_inten_ary = LL_inten_ary[emin:emax+1]
-            inten_ary = inten_ary[emin:emax+1]
+            LL_inten_ary = LL_inten_ary[self.emin:self.emax+1]
+            inten_ary = inten_ary[self.emin:self.emax+1]
 
         xsecs = np.logspace(-33,-18,301)
         LL2_xsec_m_ary = np.zeros((len(m_ary),len(xsecs))) # 2 x LL, ready for TS
@@ -481,6 +481,8 @@ class Scan():
             save_LLx_str += '_Burk'
         if self.noJprof:
             save_LLx_str += '_noJprof'
+        if self.restrict_pp:
+            save_LLx_str += '_emin'+str(self.emin)
         save_LLx_str += '_o'+str(self.iobj) 
         save_LLx_str += self.mc_tag
 

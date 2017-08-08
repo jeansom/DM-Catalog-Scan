@@ -52,6 +52,8 @@ parser.add_argument("--emin",
                   action="store", dest="emin", default=0,type=int)
 parser.add_argument("--emax",
                   action="store", dest="emax", default=39,type=int)
+parser.add_argument("--restrict_pp",
+                  action="store", dest="restrict_pp", default=0,type=int)
 
 results = parser.parse_args()
 iobj=results.iobj
@@ -78,6 +80,7 @@ mc_string=results.mc_string
 moreA=results.moreA
 emin=results.emin
 emax=results.emax
+restrict_pp=results.restrict_pp
 
 if load_dir != "":
   load_dir = work_dir + '/Scan-Small-ROI/data/' + str(load_dir) + "/"
@@ -108,4 +111,5 @@ Scan(perform_scan=perform_scan,
   moreA=moreA,
   emin=emin,
   emax=emax,
+  restrict_pp=restrict_pp,
   save_dir=work_dir + '/Scan-Small-ROI/data/' + str(save_dir) + "/")

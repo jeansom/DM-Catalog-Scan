@@ -5,11 +5,11 @@ mcstart = 0
 nmc = 20
 
 halo_step=50
-i_start=4
-n_steps=16
+i_start=13
+n_steps=7
 
 for mci in range(mcstart,mcstart+nmc):
-    for imc_dm in [5,7,9,11,13]:
+    for imc_dm in [1,3,5,7,9]:
 
         halo_start=i_start*halo_step
 
@@ -37,13 +37,13 @@ cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
             batch2 ='start_idx='+str(halo_start)+'\n'+'catalog_file=DarkSky_ALL_100,100,100_v3.csv'+'\n'
             batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --mc_string 10d2m --mc_dm '''+str(imc_dm)+''' --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --iobj \$1 --save_dir DarkSky_sid_loc1_inj10_dm'''+str(imc_dm)+''' --float_ps_together 0 --Asimov 0 --floatDM 1" > run_scripts/conf/run-DS-injloc2-10GeV-'''+str(it)+'''-v'''+str(mci)+'''-dm'''+str(imc_dm)+ '''.sh
-chmod u+x run_scripts/conf/run-DS-injloc2-10GeV-'''+str(it)+'''-v'''+str(mci)+'-dm'+str(imc_dm)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --mc_string 10000d2m --mc_dm '''+str(imc_dm)+''' --start_idx $start_idx --perform_scan 1 --imc ''' + str(mci) + ''' --iobj \$1 --save_dir DarkSky_sid_loc1_inj10000_dm'''+str(imc_dm)+''' --float_ps_together 0 --Asimov 0 --floatDM 1" > run_scripts/conf/run-DS-injloc2-10TeV-'''+str(it)+'''-v'''+str(mci)+'''-dm'''+str(imc_dm)+ '''.sh
+chmod u+x run_scripts/conf/run-DS-injloc2-10TeV-'''+str(it)+'''-v'''+str(mci)+'-dm'+str(imc_dm)+'''.sh
 '''
-            runpart='echo   0-49  ./run_scripts/conf/run-DS-injloc2-10GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.sh %t  > run_scripts/conf/run-DS-injloc2-10GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 run_scripts/conf/run-DS-injloc2-10GeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'
+            runpart='echo   0-49  ./run_scripts/conf/run-DS-injloc2-10TeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.sh %t  > run_scripts/conf/run-DS-injloc2-10TeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 run_scripts/conf/run-DS-injloc2-10TeV-'+str(it)+'-v'+str(mci)+'-dm'+str(imc_dm)+ '.conf'+'\n'+'\n'
 
             batchn = batch1+batch2 + batch3 + runpart
-            fname = "./batch/run-DS-injloc2-10GeV-"+str(it)+"-v"+str(mci)+'-dm'+str(imc_dm)+ ".batch"
+            fname = "./batch/run-DS-injloc2-10TeV-"+str(it)+"-v"+str(mci)+'-dm'+str(imc_dm)+ ".batch"
             f=open(fname, "w")
             f.write(batchn)
             f.close()
