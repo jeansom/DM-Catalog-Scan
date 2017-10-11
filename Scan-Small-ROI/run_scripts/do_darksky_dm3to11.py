@@ -1,15 +1,16 @@
 import os, sys
 import numpy as np
 
-mcstart = 10
-nmc = 10
+mcstart = 0
+nmc = 20
 
 halo_step=50
 i_start=0
 n_steps=6
 
 for mci in range(mcstart,mcstart+nmc):
-    for imc_dm in [3,5,7,9,11]:
+    # for imc_dm in [3,5,7,9,11]:
+    for imc_dm in [13]:
 
         halo_start=i_start*halo_step
 

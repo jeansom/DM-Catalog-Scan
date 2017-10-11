@@ -13,12 +13,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import *
 
+from scipy.interpolate import interp1d
+
 class LimitPlot():
     def __init__(self, 
         data_dir='/tigress/bsafdi/github/NPTF-working//NPTF-ID-Catalog/SimpleScan/data/FloatPS_indiv_floatDM/', 
         nmc=20,
         catalog_file='/tigress/bsafdi/github/NPTF-working/NPTF-ID-Catalog/data/Catalogs/DarkSky_ALL_200,200,200_v3.csv',
-        elephantm=[0, 11, 52],
+        elephantm=[11],
         halos_ran=100,
         halos_to_keep=100,
         bcut=20,
@@ -97,8 +99,14 @@ class LimitPlot():
 
         MC_limit_arr = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
         xsec_at_maxTS_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
+        xsec_at_maxTS_u1_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
+        xsec_at_maxTS_u2_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
+        xsec_at_maxTS_l1_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
+        xsec_at_maxTS_l2_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
         maxTS_ary = np.zeros((self.halos_to_keep,len(self.marr),self.nmc))
         halos_passed = np.zeros(self.nmc)
+        halos_removed_overlap = np.zeros(self.nmc)
+        halos_removed_TSxsec = np.zeros(self.nmc)
 
         for imc in tqdm_notebook(range(self.nmc)):
 
@@ -142,7 +150,9 @@ class LimitPlot():
                                           +np.sin(existing_theta)*np.sin(obj_theta)
                                           *np.cos(existing_phi-obj_phi))
 
-                        if (np.min(rvals) < self.nonoverlapradius*np.pi/180.): continue # Skip, overlaps!
+                        if (np.min(rvals) < self.nonoverlapradius*np.pi/180.): 
+
+                            continue # Skip, overlaps!
 
                         # Otherwise passed, keep its location for future overlap check
                         existing_theta = np.append(existing_theta,obj_theta)
@@ -199,9 +209,6 @@ class LimitPlot():
                     elif halos_kept < 1000: TSlim = self.TS100
                     elif halos_kept < 10000: TSlim = self.TS100
 
-                    if ((TSmx[0] > TSlim) & (TSmx[2] > self.xsecslim*best_lim[int(TSmx[1])])): 
-                        continue    
-
                     # If specified check if it overlaps with previous halos
                     if self.nonoverlap:
                         obj_theta = np.pi/2-self.b_array[iobj]*np.pi/180.
@@ -216,11 +223,16 @@ class LimitPlot():
                                               *np.cos(existing_phi-obj_phi))
 
                             if (np.min(rvals) < self.nonoverlapradius*np.pi/180.): 
+                                halos_removed_overlap[imc] += 1
                                 continue # Skip, overlaps!
 
                             # Otherwise passed, keep its location for future overlap check
                             existing_theta = np.append(existing_theta,obj_theta)
                             existing_phi = np.append(existing_phi,obj_phi)
+
+                    if ((TSmx[0] > TSlim) & (TSmx[2] > self.xsecslim*best_lim[int(TSmx[1])])): 
+                        halos_removed_TSxsec[imc] += 1
+                        continue    
 
 
                     # Add this objects LL at the relevant mass to the cumulative LL 
@@ -232,6 +244,39 @@ class LimitPlot():
                     max_loc = np.argmax(TS_xsec_ary)
                     max_TS = TS_xsec_ary[max_loc]
 
+                    # This is shitty code so what come at me
+
+                    # try: TSinterp_hi = interp1d(TS_xsec_ary[max_loc:],xsecs[max_loc:])
+                    # except: pass 
+                    # try: TSinterp_lo = interp1d(TS_xsec_ary[:max_loc],xsecs[:max_loc])
+                    # except: pass
+                    # try: mlll1 = TSinterp_lo(np.max(TS_xsec_ary) - 1 )
+                    # except: mlll1 = 1e-33
+                    # try: mlll2 = TSinterp_lo(np.max(TS_xsec_ary) - 4 )
+                    # except: mlll2 = 1e-33
+                    # try: mllu1 = TSinterp_hi(np.max(TS_xsec_ary) - 1 )
+                    # except: mllu1 = 1e-15
+                    # try: mllu2 = TSinterp_hi(np.max(TS_xsec_ary) - 4 )
+                    # except: mllu2 = 1e-15
+
+                    try: TSinterp_hi = interp1d(TS_xsec_ary[max_loc:],xsecs[max_loc:])
+                    except: pass 
+                    try: TSinterp_lo = interp1d(TS_xsec_ary[:max_loc],xsecs[:max_loc])
+                    except: pass
+
+                    try: 
+                        if np.max(TS_xsec_ary) - 1 < TS_xsec_ary[:max_loc][-1]:
+                            mlll1 = TSinterp_lo(np.max(TS_xsec_ary) - 1 )
+                        else:
+                            # print np.max(TS_xsec_ary) - 1 , TS_xsec_ary[:max_loc][-1]
+                            mlll1 = xsecs[:max_loc][-1]
+                    except: mlll1=1e-33#; print np.max(TS_xsec_ary) - 1; print zip(TS_xsec_ary[:max_loc],xsecs[:max_loc])
+                    try: mlll2 = TSinterp_lo(np.max(TS_xsec_ary) - 4 )
+                    except: mlll2 = 1e-33
+                    try: mllu1 = TSinterp_hi(np.max(TS_xsec_ary) - 1 )
+                    except: mllu1 = 1e-15
+                    try: mllu2 = TSinterp_hi(np.max(TS_xsec_ary) - 4 )
+                    except: mllu2 = 1e-15
                     # print max_TS
                     
                     for xi in range(max_loc,len(xsecs)):
@@ -243,6 +288,12 @@ class LimitPlot():
                             break
                     
                     xsec_at_maxTS_ary[halos_kept, im, imc] = xsecs[max_loc]
+                    
+                    xsec_at_maxTS_u1_ary[halos_kept, im, imc] = mllu1
+                    xsec_at_maxTS_u2_ary[halos_kept, im, imc] = mllu2
+                    xsec_at_maxTS_l1_ary[halos_kept, im, imc] = mlll1
+                    xsec_at_maxTS_l2_ary[halos_kept, im, imc] = mlll2
+                    
                     maxTS_ary[halos_kept, im, imc] = max_TS
 
                     # Passed, add to counter
@@ -269,11 +320,24 @@ class LimitPlot():
                 for ih in range(int(halos_passed[imc]), self.halos_to_keep):
                     MC_limit_arr[ih,:,imc] = MC_limit_arr[int(halos_passed[imc]) - 1,:,imc]
                     xsec_at_maxTS_ary[ih,:,imc] = xsec_at_maxTS_ary[int(halos_passed[imc]) - 1,:,imc]
+                    xsec_at_maxTS_u1_ary[ih,:,imc] = xsec_at_maxTS_u1_ary[int(halos_passed[imc]) - 1,:,imc]
+                    xsec_at_maxTS_u2_ary[ih,:,imc] = xsec_at_maxTS_u2_ary[int(halos_passed[imc]) - 1,:,imc]
+                    xsec_at_maxTS_l1_ary[ih,:,imc] = xsec_at_maxTS_l1_ary[int(halos_passed[imc]) - 1,:,imc]
+                    xsec_at_maxTS_l2_ary[ih,:,imc] = xsec_at_maxTS_l2_ary[int(halos_passed[imc]) - 1,:,imc]
                     maxTS_ary[ih,:,imc] = maxTS_ary[int(halos_passed[imc]) - 1,:,imc]
             halos_to_plot = self.halos_to_keep
 
         # Return limit and maxTS arrays
+
+        self.halos_that_passed = halos_passed
+        self.halos_that_were_removed_overlap = halos_removed_overlap
+        self.halos_that_were_removed_TSxsec = halos_removed_TSxsec
+
         return MC_limit_arr[:halos_to_plot], xsec_at_maxTS_ary[:halos_to_plot], maxTS_ary[:halos_to_plot]
+        # return MC_limit_arr[:halos_to_plot], xsec_at_maxTS_ary[:halos_to_plot], \
+        #     xsec_at_maxTS_u1_ary, xsec_at_maxTS_u2_ary,\
+        #     xsec_at_maxTS_l1_ary,xsec_at_maxTS_l2_ary,\
+        #     maxTS_ary[:halos_to_plot]
 
     def return_limits_single(self, iobj):
         """

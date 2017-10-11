@@ -249,6 +249,8 @@ class LimitPlot():
         #################
 
         # Return limit and maxTS arrays
+
+        self.halos_that_passed = halos_passed
         return MC_limit_arr[:halos_to_plot], xsec_at_maxTS_ary[:halos_to_plot]
 
     def files_exist(self):

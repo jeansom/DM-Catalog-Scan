@@ -79,6 +79,10 @@ def construct_xsec_LL(double[::1] xsecs, double[::1] ebins, double[::1] PPnoxsec
             LL_proflike[Ji] += -pow(l10J_proflike[Ji]-l10_J,2.)/(2*pow(l10_Jerr,2.)) \
                             - log( sqrt(2*pi)*l10_Jerr*pow(10.,l10_J)*ln10 )
 
+            # # Wrong form of likelihood
+            # LL_proflike[Ji] += -pow(l10J_proflike[Ji]-l10_J,2.)/(2*pow(l10_Jerr,2.)) \
+            #                 - log( sqrt(2*pi)*l10_Jerr*pow(10.,l10J_proflike[Ji])*ln10 )
+
         # Now find the maximum LL from this list, as that's the profile likelihood method
         LL2vals[xi] = 2*find_max(LL_proflike,Nj) # 2x because for TS
 

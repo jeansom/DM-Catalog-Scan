@@ -24,7 +24,7 @@ for mci in [-1]:
 #SBATCH -C ivy
 
 export PATH="/tigress/smsharma/anaconda2/bin:$PATH"
-source activate venv_py27
+source activate # venv_py27
 # module load openmpi/gcc/1.6.5/64
 module load rh/devtoolset/4
 module load intel-mpi/intel/2017.2/64
@@ -36,7 +36,7 @@ cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
         batch2 ='start_idx='+str(halo_start)+'\n'+'catalog_file=2MRSLocalTully_ALL_DATAPAPER_Planck15_v7.csv'+'\n'
         batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --diff p8 --start_idx $start_idx --perform_scan 0 --imc ''' + str(mci) + ''' --Burkert 1 --iobj \$1 --save_dir Tully_Burkert --float_ps_together 0 --Asimov 0 --floatDM 1 --restrict_pp 1 --emin 4" > ./run_scripts/conf/run-Data-ecut4-indiv-Burkert-'''+str(it)+'''-v'''+str(mci)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --diff p8 --start_idx $start_idx --perform_scan 0 --imc ''' + str(mci) + ''' --Burkert 1 --iobj \$1 --save_dir Tully_Burkert --float_ps_together 0 --Asimov 0 --floatDM 1 --restrict_pp 1 --emin 4 --emax 30" > ./run_scripts/conf/run-Data-ecut4-indiv-Burkert-'''+str(it)+'''-v'''+str(mci)+'''.sh
 chmod u+x ./run_scripts/conf/run-Data-ecut4-indiv-Burkert-'''+str(it)+'''-v'''+str(mci)+'''.sh
 '''
         runpart='echo   0-49  ./run_scripts/conf/run-Data-ecut4-indiv-Burkert-'+str(it)+'-v'+str(mci)+'.sh %t  > ./run_scripts/conf/run-Data-ecut4-indiv-Burkert-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 ./run_scripts/conf/run-Data-ecut4-indiv-Burkert-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'

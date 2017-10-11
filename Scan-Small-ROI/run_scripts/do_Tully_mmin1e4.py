@@ -16,7 +16,7 @@ for mci in [-1]:
 
         batch1='''#!/bin/bash
 #SBATCH -n 50   # node count
-#SBATCH -t 00:30:00
+#SBATCH -t 1:30:00
 #SBATCH --mem-per-cpu=4gb
 ##SBATCH --mail-type=begin
 ##SBATCH --mail-type=end
@@ -36,7 +36,7 @@ cd /tigress/nrodd/DM-Catalog-Scan/Scan-Small-ROI/
 '''
         batch2 ='start_idx='+str(halo_start)+'\n'+'catalog_file=2MRSLocalTully_ALL_DATAPAPER_Planck15_mmin1e4_v7.csv'+'\n'
         batch3 = '''
-echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --boost 1 --diff p8 --start_idx $start_idx --perform_scan 0 --imc ''' + str(mci) + ''' --iobj \$1 --load_dir Tully --save_dir Tully_mmin1e4 --float_ps_together 0 --Asimov 0 --floatDM 1 --restrict_pp 1 --emin 4" > ./run_scripts/conf/run-Data-indiv-mmin1e4-floatDM-ecut4-'''+str(it)+'''-v'''+str(mci)+'''.sh
+echo "#!/bin/bash \necho i = \$1 \npython scan_interface.py --catalog_file $catalog_file --boost 1 --diff p8 --start_idx $start_idx --perform_scan 0 --imc ''' + str(mci) + ''' --iobj \$1 --load_dir Tully --save_dir Tully_mmin1e4 --float_ps_together 0 --Asimov 0 --floatDM 1 --restrict_pp 1 --emin 4 --emax 30" > ./run_scripts/conf/run-Data-indiv-mmin1e4-floatDM-ecut4-'''+str(it)+'''-v'''+str(mci)+'''.sh
 chmod u+x ./run_scripts/conf/run-Data-indiv-mmin1e4-floatDM-ecut4-'''+str(it)+'''-v'''+str(mci)+'''.sh
 '''
         runpart='echo   0-49  ./run_scripts/conf/run-Data-indiv-mmin1e4-floatDM-ecut4-'+str(it)+'-v'+str(mci)+'.sh %t  > ./run_scripts/conf/run-Data-indiv-mmin1e4-floatDM-ecut4-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'+'srun --multi-prog --no-kill --wait=0 ./run_scripts/conf/run-Data-indiv-mmin1e4-floatDM-ecut4-'+str(it)+'-v'+str(mci)+'.conf'+'\n'+'\n'
